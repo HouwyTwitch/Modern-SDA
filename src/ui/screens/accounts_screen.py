@@ -151,10 +151,4 @@ class AccountsScreen(QWidget):
         if self.selected_account and auto_refresh_enabled:
             self.start_auto_refresh()
         else:
-    def set_selected_account(self, account):
-        """Set the selected account and start auto-refresh"""
-        self.selected_account = account
-        if account:
-            self.start_auto_refresh()
-        else:
             self.stop_auto_refresh()
