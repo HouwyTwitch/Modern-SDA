@@ -10,6 +10,13 @@ from PyQt5.QtWidgets import QApplication
 # Import account management classes
 from src.account_manager import AccountData
 from src.settings import SettingsManager
+from src.theme import ThemeManager
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt5.QtGui import QFont, QClipboard
+from PyQt5.QtWidgets import QApplication
+
+# Import account management classes
+from src.account_manager import AccountData
 
 
 class AccountsScreen(QWidget):
@@ -28,6 +35,7 @@ class AccountsScreen(QWidget):
     
     def setup_ui(self):
         """Setup the accounts screen UI"""
+        current_theme = ThemeManager.get_current_theme()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(20)
@@ -41,7 +49,7 @@ class AccountsScreen(QWidget):
         self.title_label.setFont(QFont("Segoe UI", 26, QFont.Bold))
         self.title_label.setStyleSheet(f"""
             QLabel {{
-                color: {NoctuaTheme.TEXT_PRIMARY};
+                color: {current_theme.TEXT_PRIMARY};
                 margin-bottom: 4px;
             }}
         """)
@@ -54,7 +62,7 @@ class AccountsScreen(QWidget):
         # Subtitle - account selection status
         self.subtitle_label = QLabel("No account was selected")
         self.subtitle_label.setFont(QFont("Segoe UI", 12))
-        self.subtitle_label.setStyleSheet(f"color: {NoctuaTheme.TEXT_SECONDARY};")
+        self.subtitle_label.setStyleSheet(f"color: {current_theme.TEXT_SECONDARY};")
         self.subtitle_label.setAlignment(Qt.AlignCenter)
         header_layout.addWidget(self.subtitle_label)
         
@@ -141,6 +149,12 @@ class AccountsScreen(QWidget):
         self.copy_on_click_enabled = SettingsManager.get_setting("copy_code_on_click")
         auto_refresh_enabled = SettingsManager.get_setting("auto_refresh_enabled")
         if self.selected_account and auto_refresh_enabled:
+            self.start_auto_refresh()
+        else:
+    def set_selected_account(self, account):
+        """Set the selected account and start auto-refresh"""
+        self.selected_account = account
+        if account:
             self.start_auto_refresh()
         else:
             self.stop_auto_refresh()

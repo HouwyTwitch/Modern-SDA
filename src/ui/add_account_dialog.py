@@ -111,6 +111,7 @@ class AddAccountDialog(QDialog):
         self.add_button.clicked.connect(self.accept)
         
         button_layout.addWidget(self.cancel_button)
+        button_layout.addStretch()
         button_layout.addWidget(self.add_button)
         
         layout.addLayout(button_layout)

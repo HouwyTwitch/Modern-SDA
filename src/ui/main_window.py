@@ -2,10 +2,10 @@ import sys
 import asyncio
 from typing import List, Dict, Optional
 from PyQt5.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QStackedWidget, 
-    QButtonGroup, QMessageBox, QDialog
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QStackedWidget,
+    QButtonGroup, QMessageBox, QDialog, QGraphicsOpacityEffect
 )
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QAbstractAnimation
 from PyQt5.QtGui import QFont
 
 # Import account management classes
@@ -165,8 +165,8 @@ class SteamAuthenticatorGUI(QMainWindow):
             for i, button in enumerate(self.nav_buttons):
                 button.set_active(i == index)
             
-            # Switch screen
-            self.stacked_widget.setCurrentIndex(index)
+            # Switch screen with animation
+            self.animate_screen_change(index)
             self.current_screen = index
             
             # Show/hide floating add button (only on accounts screen)
@@ -177,6 +177,33 @@ class SteamAuthenticatorGUI(QMainWindow):
                 # Use the selected account from main window
                 selected_account = getattr(self, 'selected_account', None)
                 self.confirmations_screen.on_account_selected(selected_account)
+
+    def animate_screen_change(self, index: int):
+        """Animate screen change in the stacked widget."""
+        if index == self.stacked_widget.currentIndex():
+            return
+
+        if hasattr(self, "_screen_animation") and self._screen_animation.state() == QAbstractAnimation.Running:
+            self._screen_animation.stop()
+
+        self.stacked_widget.setCurrentIndex(index)
+        target_widget = self.stacked_widget.currentWidget()
+        opacity_effect = QGraphicsOpacityEffect(target_widget)
+        opacity_effect.setOpacity(0.0)
+        target_widget.setGraphicsEffect(opacity_effect)
+
+        animation = QPropertyAnimation(opacity_effect, b"opacity", self)
+        animation.setDuration(220)
+        animation.setStartValue(0.0)
+        animation.setEndValue(1.0)
+        animation.setEasingCurve(QEasingCurve.OutCubic)
+
+        def cleanup_effect():
+            target_widget.setGraphicsEffect(None)
+
+        animation.finished.connect(cleanup_effect)
+        self._screen_animation = animation
+        animation.start()
     
     def apply_theme(self):
         """Apply the current theme to the application"""
