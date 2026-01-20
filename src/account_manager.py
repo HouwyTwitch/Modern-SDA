@@ -438,7 +438,6 @@ class AuthenticationManager(QObject):
             
             # If we still need to login (no valid tokens), do full login
             if client.is_access_token_expired or not (account.access_token or account.refresh_token):
-                print('login')
                 await client.login()
             
             # Store the client for future use
