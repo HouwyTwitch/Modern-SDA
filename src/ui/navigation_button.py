@@ -101,6 +101,7 @@ class NavigationButton(QPushButton):
         icon = current_theme.create_svg_icon(self.svg_icon, icon_color, 24)
         pixmap = icon.pixmap(24, 24)
         self.icon_label.setPixmap(pixmap)
+        self._apply_label_color(text_color)
 
         target_opacity = 1.0 if self.is_active else 0.8
         self._animate_opacity(target_opacity)
@@ -138,6 +139,7 @@ class NavigationButton(QPushButton):
             icon = current_theme.create_svg_icon(self.svg_icon, current_theme.TEXT_PRIMARY, 24)
             pixmap = icon.pixmap(24, 24)
             self.icon_label.setPixmap(pixmap)
+            self._apply_label_color(current_theme.TEXT_PRIMARY)
             self._animate_opacity(1.0)
         super().enterEvent(event)
     
@@ -149,6 +151,7 @@ class NavigationButton(QPushButton):
             icon = current_theme.create_svg_icon(self.svg_icon, current_theme.TEXT_SECONDARY, 24)
             pixmap = icon.pixmap(24, 24)
             self.icon_label.setPixmap(pixmap)
+            self._apply_label_color(current_theme.TEXT_SECONDARY)
             self._animate_opacity(0.8)
         super().leaveEvent(event)
 
@@ -161,3 +164,14 @@ class NavigationButton(QPushButton):
         self.label_opacity_anim.setEndValue(value)
         self.icon_opacity_anim.start()
         self.label_opacity_anim.start()
+
+    def _apply_label_color(self, color: str):
+        self.label.setStyleSheet(f"""
+            QLabel {{
+                background-color: transparent;
+                border: none;
+                margin: 0px;
+                padding: 0px;
+                color: {color};
+            }}
+        """)

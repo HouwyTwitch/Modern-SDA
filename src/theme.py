@@ -343,6 +343,165 @@ class DarkTheme:
             .replace(NoctuaTheme.ERROR, DarkTheme.ERROR)
 
 
+class OceanTheme:
+    """Ocean-inspired color palette"""
+
+    BACKGROUND = "#0B1F2A"
+    SURFACE = "#112836"
+    SURFACE_ELEVATED = "#183445"
+    SURFACE_HOVER = "#21465C"
+    ACCENT = "#2EC4B6"
+    ACCENT_HOVER = "#45D6C8"
+    ACCENT_PRESSED = "#1BAA9C"
+    TEXT_PRIMARY = "#E8F5F7"
+    TEXT_SECONDARY = "#A7C6CC"
+    TEXT_TERTIARY = "#7FA3AA"
+    BORDER = "#234354"
+    BORDER_FOCUS = "#2EC4B6"
+    SUCCESS = "#4CD99A"
+    ERROR = "#FF6B6B"
+    SHADOW = "#08151C"
+
+    @staticmethod
+    def create_svg_icon(svg_content: str, color: str, size: int = 24):
+        return NoctuaTheme.create_svg_icon(svg_content, color, size)
+
+    @staticmethod
+    def get_accounts_svg():
+        return NoctuaTheme.get_accounts_svg()
+
+    @staticmethod
+    def get_confirmations_svg():
+        return NoctuaTheme.get_confirmations_svg()
+
+    @staticmethod
+    def get_settings_svg():
+        return NoctuaTheme.get_settings_svg()
+
+    @staticmethod
+    def get_stylesheet():
+        return NoctuaTheme.get_stylesheet().replace(NoctuaTheme.BACKGROUND, OceanTheme.BACKGROUND)\
+            .replace(NoctuaTheme.SURFACE, OceanTheme.SURFACE)\
+            .replace(NoctuaTheme.SURFACE_ELEVATED, OceanTheme.SURFACE_ELEVATED)\
+            .replace(NoctuaTheme.SURFACE_HOVER, OceanTheme.SURFACE_HOVER)\
+            .replace(NoctuaTheme.ACCENT, OceanTheme.ACCENT)\
+            .replace(NoctuaTheme.ACCENT_HOVER, OceanTheme.ACCENT_HOVER)\
+            .replace(NoctuaTheme.ACCENT_PRESSED, OceanTheme.ACCENT_PRESSED)\
+            .replace(NoctuaTheme.TEXT_PRIMARY, OceanTheme.TEXT_PRIMARY)\
+            .replace(NoctuaTheme.TEXT_SECONDARY, OceanTheme.TEXT_SECONDARY)\
+            .replace(NoctuaTheme.TEXT_TERTIARY, OceanTheme.TEXT_TERTIARY)\
+            .replace(NoctuaTheme.BORDER, OceanTheme.BORDER)\
+            .replace(NoctuaTheme.BORDER_FOCUS, OceanTheme.BORDER_FOCUS)\
+            .replace(NoctuaTheme.SUCCESS, OceanTheme.SUCCESS)\
+            .replace(NoctuaTheme.ERROR, OceanTheme.ERROR)
+
+
+class ForestTheme:
+    """Forest-inspired color palette"""
+
+    BACKGROUND = "#0E1A13"
+    SURFACE = "#16241B"
+    SURFACE_ELEVATED = "#1E2E23"
+    SURFACE_HOVER = "#243A2D"
+    ACCENT = "#6BCB77"
+    ACCENT_HOVER = "#7DD989"
+    ACCENT_PRESSED = "#56B965"
+    TEXT_PRIMARY = "#F3F7F0"
+    TEXT_SECONDARY = "#B7C8B0"
+    TEXT_TERTIARY = "#8FA08A"
+    BORDER = "#2B3D30"
+    BORDER_FOCUS = "#6BCB77"
+    SUCCESS = "#5ED092"
+    ERROR = "#F26B6B"
+    SHADOW = "#0A120D"
+
+    @staticmethod
+    def create_svg_icon(svg_content: str, color: str, size: int = 24):
+        return NoctuaTheme.create_svg_icon(svg_content, color, size)
+
+    @staticmethod
+    def get_accounts_svg():
+        return NoctuaTheme.get_accounts_svg()
+
+    @staticmethod
+    def get_confirmations_svg():
+        return NoctuaTheme.get_confirmations_svg()
+
+    @staticmethod
+    def get_settings_svg():
+        return NoctuaTheme.get_settings_svg()
+
+    @staticmethod
+    def get_stylesheet():
+        return NoctuaTheme.get_stylesheet().replace(NoctuaTheme.BACKGROUND, ForestTheme.BACKGROUND)\
+            .replace(NoctuaTheme.SURFACE, ForestTheme.SURFACE)\
+            .replace(NoctuaTheme.SURFACE_ELEVATED, ForestTheme.SURFACE_ELEVATED)\
+            .replace(NoctuaTheme.SURFACE_HOVER, ForestTheme.SURFACE_HOVER)\
+            .replace(NoctuaTheme.ACCENT, ForestTheme.ACCENT)\
+            .replace(NoctuaTheme.ACCENT_HOVER, ForestTheme.ACCENT_HOVER)\
+            .replace(NoctuaTheme.ACCENT_PRESSED, ForestTheme.ACCENT_PRESSED)\
+            .replace(NoctuaTheme.TEXT_PRIMARY, ForestTheme.TEXT_PRIMARY)\
+            .replace(NoctuaTheme.TEXT_SECONDARY, ForestTheme.TEXT_SECONDARY)\
+            .replace(NoctuaTheme.TEXT_TERTIARY, ForestTheme.TEXT_TERTIARY)\
+            .replace(NoctuaTheme.BORDER, ForestTheme.BORDER)\
+            .replace(NoctuaTheme.BORDER_FOCUS, ForestTheme.BORDER_FOCUS)\
+            .replace(NoctuaTheme.SUCCESS, ForestTheme.SUCCESS)\
+            .replace(NoctuaTheme.ERROR, ForestTheme.ERROR)
+
+
+class SolarTheme:
+    """Solar-inspired light palette"""
+
+    BACKGROUND = "#FFF7E6"
+    SURFACE = "#FFEFD5"
+    SURFACE_ELEVATED = "#FFE3B3"
+    SURFACE_HOVER = "#FFD89C"
+    ACCENT = "#FF8C42"
+    ACCENT_HOVER = "#FF9F5A"
+    ACCENT_PRESSED = "#E6782F"
+    TEXT_PRIMARY = "#3A2A1B"
+    TEXT_SECONDARY = "#6B4E3D"
+    TEXT_TERTIARY = "#A07B65"
+    BORDER = "#F1C8A0"
+    BORDER_FOCUS = "#FF8C42"
+    SUCCESS = "#3CB371"
+    ERROR = "#E85D5D"
+    SHADOW = "#D2B48C"
+
+    @staticmethod
+    def create_svg_icon(svg_content: str, color: str, size: int = 24):
+        return NoctuaTheme.create_svg_icon(svg_content, color, size)
+
+    @staticmethod
+    def get_accounts_svg():
+        return NoctuaTheme.get_accounts_svg()
+
+    @staticmethod
+    def get_confirmations_svg():
+        return NoctuaTheme.get_confirmations_svg()
+
+    @staticmethod
+    def get_settings_svg():
+        return NoctuaTheme.get_settings_svg()
+
+    @staticmethod
+    def get_stylesheet():
+        return NoctuaTheme.get_stylesheet().replace(NoctuaTheme.BACKGROUND, SolarTheme.BACKGROUND)\
+            .replace(NoctuaTheme.SURFACE, SolarTheme.SURFACE)\
+            .replace(NoctuaTheme.SURFACE_ELEVATED, SolarTheme.SURFACE_ELEVATED)\
+            .replace(NoctuaTheme.SURFACE_HOVER, SolarTheme.SURFACE_HOVER)\
+            .replace(NoctuaTheme.ACCENT, SolarTheme.ACCENT)\
+            .replace(NoctuaTheme.ACCENT_HOVER, SolarTheme.ACCENT_HOVER)\
+            .replace(NoctuaTheme.ACCENT_PRESSED, SolarTheme.ACCENT_PRESSED)\
+            .replace(NoctuaTheme.TEXT_PRIMARY, SolarTheme.TEXT_PRIMARY)\
+            .replace(NoctuaTheme.TEXT_SECONDARY, SolarTheme.TEXT_SECONDARY)\
+            .replace(NoctuaTheme.TEXT_TERTIARY, SolarTheme.TEXT_TERTIARY)\
+            .replace(NoctuaTheme.BORDER, SolarTheme.BORDER)\
+            .replace(NoctuaTheme.BORDER_FOCUS, SolarTheme.BORDER_FOCUS)\
+            .replace(NoctuaTheme.SUCCESS, SolarTheme.SUCCESS)\
+            .replace(NoctuaTheme.ERROR, SolarTheme.ERROR)
+
+
 # Global theme manager
 class ThemeManager:
     """Manages application themes"""
@@ -350,7 +509,10 @@ class ThemeManager:
     themes = {
         "Noctua": NoctuaTheme,
         "Light": LightTheme,
-        "Dark": DarkTheme
+        "Dark": DarkTheme,
+        "Ocean": OceanTheme,
+        "Forest": ForestTheme,
+        "Solar": SolarTheme
     }
     
     current_theme = "Noctua"

@@ -28,7 +28,9 @@ class SteamAuthenticatorGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         SettingsManager.load_settings()
-        ThemeManager.set_theme(SettingsManager.get_setting("theme"))
+        if not ThemeManager.set_theme(SettingsManager.get_setting("theme")):
+            ThemeManager.set_theme("Noctua")
+            SettingsManager.set_setting("theme", "Noctua")
         # Initialize account management
         self.account_manager = AccountManager()
         self.auth_manager = AuthenticationManager()
