@@ -397,7 +397,6 @@ class SteamAuthenticatorGUI(QMainWindow):
                 QMessageBox.warning(self, "Remove Failed", "Failed to remove account.")
     
     def on_account_selected(self, selected_widget):
-        print('selected')
         """Handle account selection with automatic authentication"""
         # Store the previously selected account
         self.previous_selected_account = self.selected_account
@@ -424,7 +423,6 @@ class SteamAuthenticatorGUI(QMainWindow):
         needs_auth = selected_account.needs_reauthentication()
         has_client = str(selected_account.steam_id) in self.auth_manager._steam_clients
         if needs_auth or not has_client:
-            print('needs_auth or not has_client')
             # Start authentication in background
             self.authenticate_account(selected_account)
         else:
