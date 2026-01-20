@@ -210,6 +210,44 @@ class AccountManager(QObject):
             
         except Exception:
             return False
+
+    def update_account(
+        self,
+        steam_id: str,
+        mafile_path: Optional[str] = None,
+        password: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Update account details such as mafile path or password."""
+        try:
+            account = self.get_account_by_steam_id(steam_id)
+            if not account:
+                return {'success': False, 'error': 'Account not found'}
+
+            if mafile_path:
+                mafile_validation = AccountValidator.validate_mafile(mafile_path)
+                if not mafile_validation['valid']:
+                    return {'success': False, 'error': mafile_validation['error']}
+
+                mafile_data = mafile_validation['data']
+                updated_steam_id = str(mafile_data['Session']['SteamID'])
+                if updated_steam_id != str(steam_id):
+                    return {'success': False, 'error': 'Mafile does not match this account'}
+
+                account.mafile_path = mafile_path
+                account.account_name = mafile_data['account_name']
+
+            if password:
+                password_validation = AccountValidator.validate_password(password)
+                if not password_validation['valid']:
+                    return {'success': False, 'error': password_validation['error']}
+                account.password = password
+
+            self.save_accounts()
+            self.account_updated.emit(account)
+            return {'success': True, 'account': account}
+
+        except Exception as e:
+            return {'success': False, 'error': f'Failed to update account: {str(e)}'}
     
     def get_account_by_steam_id(self, steam_id: str) -> Optional[AccountData]:
         """Get account by steam_id"""
