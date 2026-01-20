@@ -354,8 +354,8 @@ class ThemedComboBox(QComboBox):
         view = self.view()
         if view and self.current_theme:
             # Disable scrolling and auto-size
-            view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-            view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+            view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
             
             # Calculate proper height for all items
             item_count = self.count()
