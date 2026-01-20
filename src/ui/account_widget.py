@@ -1,4 +1,3 @@
-from typing import List, Dict, Optional
 from PyQt5.QtWidgets import (
     QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
 )
@@ -15,6 +14,8 @@ class AccountWidget(QFrame):
     """Custom widget for displaying account information"""
     
     account_selected = pyqtSignal(object)  # Signal emitted when account is selected
+    edit_requested = pyqtSignal(object)  # Signal emitted when edit is requested
+    remove_requested = pyqtSignal(object)  # Signal emitted when removal is requested
     
     def __init__(self, account: AccountData, parent=None):
         super().__init__(parent)
@@ -131,11 +132,30 @@ class AccountWidget(QFrame):
         info_layout.addWidget(self.steamid_label)
         
         layout.addWidget(info_container, 1)  # Give it stretch factor of 1
+
+        actions_container = QFrame()
+        actions_layout = QVBoxLayout(actions_container)
+        actions_layout.setContentsMargins(0, 0, 0, 0)
+        actions_layout.setSpacing(8)
+
+        self.edit_button = QPushButton("Edit")
+        self.edit_button.setFixedSize(70, 32)
+        self.edit_button.clicked.connect(lambda: self.edit_requested.emit(self.account))
+
+        self.remove_button = QPushButton("Remove")
+        self.remove_button.setFixedSize(70, 32)
+        self.remove_button.clicked.connect(lambda: self.remove_requested.emit(self.account))
+
+        actions_layout.addWidget(self.edit_button)
+        actions_layout.addWidget(self.remove_button)
+
+        layout.addWidget(actions_container, 0, Qt.AlignRight | Qt.AlignVCenter)
         
         # Add hover effect and click functionality
         self.setMouseTracking(True)
         self.container.setMouseTracking(True)
         self.setCursor(Qt.PointingHandCursor)  # Show pointer cursor
+        self.apply_action_styles()
     
     def enterEvent(self, event):
         """Handle mouse enter event"""
@@ -193,6 +213,42 @@ class AccountWidget(QFrame):
             self._animate_shadow(14)
         else:
             self._animate_shadow(8)
+        self.apply_action_styles()
+
+    def apply_action_styles(self):
+        """Apply theme styling to action buttons"""
+        current_theme = ThemeManager.get_current_theme()
+
+        self.edit_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {current_theme.SURFACE_HOVER};
+                border: 1px solid {current_theme.BORDER};
+                border-radius: 8px;
+                color: {current_theme.TEXT_PRIMARY};
+                font-size: 12px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {current_theme.ACCENT};
+                border-color: {current_theme.BORDER_FOCUS};
+            }}
+        """)
+
+        self.remove_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: transparent;
+                border: 1px solid {current_theme.BORDER};
+                border-radius: 8px;
+                color: {current_theme.TEXT_SECONDARY};
+                font-size: 12px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {current_theme.ACCENT_PRESSED};
+                border-color: {current_theme.BORDER_FOCUS};
+                color: {current_theme.TEXT_PRIMARY};
+            }}
+        """)
     
     def load_avatar(self):
         """Load avatar image from URL"""
@@ -210,6 +266,13 @@ class AccountWidget(QFrame):
         # Fallback: first letter of account name
         if self.account.account_name:
             self.avatar_label.setText(self.account.account_name[0].upper())
+
+    def update_account(self, account: AccountData):
+        """Update account data and refresh display"""
+        self.account = account
+        self.name_label.setText(self.account.account_name)
+        self.steamid_label.setText(f"Steam ID: {self.account.steam_id}")
+        self.load_avatar()
 
     def _animate_shadow(self, blur_radius: int):
         self.shadow_anim.stop()

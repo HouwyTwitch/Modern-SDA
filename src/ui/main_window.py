@@ -13,6 +13,7 @@ from src.account_manager import AccountData, AccountManager, AuthenticationManag
 from src.theme import ThemeManager
 from src.ui.account_widget import AccountWidget
 from src.ui.add_account_dialog import AddAccountDialog
+from src.ui.edit_account_dialog import EditAccountDialog
 from src.ui.navigation_button import NavigationButton
 from src.ui.screens.accounts_screen import AccountsScreen
 from src.ui.screens.confirmations_screen import ConfirmationsScreen
@@ -328,6 +329,8 @@ class SteamAuthenticatorGUI(QMainWindow):
         if hasattr(self, 'accounts_screen') and self.accounts_screen is not None:
             # Connect selection signal
             account_widget.account_selected.connect(self.accounts_screen.on_account_selected)
+            account_widget.edit_requested.connect(self.show_edit_account_dialog)
+            account_widget.remove_requested.connect(self.confirm_remove_account)
             
             # Insert before the stretch in the accounts screen
             self.accounts_screen.accounts_layout.insertWidget(
@@ -340,6 +343,49 @@ class SteamAuthenticatorGUI(QMainWindow):
                 self.accounts_screen.search_input.textChanged.connect(self.filter_accounts)
         else:
             pass
+
+    def show_edit_account_dialog(self, account: AccountData):
+        """Show edit account dialog and save changes."""
+        dialog = EditAccountDialog(account, self)
+        if dialog.exec_():
+            account_data = dialog.get_account_data()
+            mafile_path = account_data['mafile_path']
+            password = account_data['password'] or None
+
+            if mafile_path == account.mafile_path:
+                mafile_path = None
+
+            if not mafile_path and not password:
+                QMessageBox.information(self, "No Changes", "No changes were provided.")
+                return
+
+            result = self.account_manager.update_account(
+                account.steam_id,
+                mafile_path=mafile_path,
+                password=password
+            )
+
+            if not result['success']:
+                QMessageBox.warning(self, "Update Failed", result['error'])
+            else:
+                QMessageBox.information(
+                    self,
+                    "Account Updated",
+                    f"Successfully updated account '{result['account'].account_name}'."
+                )
+
+    def confirm_remove_account(self, account: AccountData):
+        """Confirm and remove an account."""
+        result = QMessageBox.question(
+            self,
+            "Remove Account",
+            f"Remove account '{account.account_name}'?\nThis will remove it from this app only.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if result == QMessageBox.Yes:
+            if not self.account_manager.remove_account(account.steam_id):
+                QMessageBox.warning(self, "Remove Failed", "Failed to remove account.")
     
     def on_account_selected(self, selected_widget):
         print('selected')
@@ -450,6 +496,14 @@ class SteamAuthenticatorGUI(QMainWindow):
                 widget.setParent(None)
                 widget.deleteLater()
                 break
+
+        if self.selected_account and str(self.selected_account.steam_id) == str(steam_id):
+            self.selected_account = None
+            self.accounts_screen.set_selected_account(None)
+            self.accounts_screen.title_label.setText("SDA")
+            self.accounts_screen.subtitle_label.setText("No account was selected")
+            if hasattr(self, 'confirmations_screen'):
+                self.confirmations_screen.on_account_selected(None)
         
     def on_login_started(self, steam_id: str):
         """Handle login started signal"""
@@ -514,6 +568,9 @@ class SteamAuthenticatorGUI(QMainWindow):
         """Handle account updated (e.g., avatar fetched)"""
         for widget in self.account_widgets:
             if widget.account.steam_id == account.steam_id:
-                widget.account = account
-                widget.load_avatar()
+                widget.update_account(account)
                 break
+
+        if self.selected_account and self.selected_account.steam_id == account.steam_id:
+            self.selected_account = account
+            self.accounts_screen.subtitle_label.setText(account.account_name)
