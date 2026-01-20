@@ -219,11 +219,11 @@ class SteamAuthenticatorGUI(QMainWindow):
         # Update navigation bar styling
         if hasattr(self, 'nav_bar'):
             self.nav_bar.setStyleSheet(f"""
-                QFrame {
+                QFrame {{
                     background-color: {current_theme.SURFACE};
                     border-top: 1px solid {current_theme.BORDER};
                     border-radius: 0;
-                }
+                }}
             """)
         
         # Update floating add button
