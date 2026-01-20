@@ -37,18 +37,19 @@ class AccountWidget(QFrame):
         
         # Create main container for better styling
         self.container = QFrame(self)
+        current_theme = ThemeManager.get_current_theme()
         self.container.setStyleSheet(f"""
             QFrame {{
-                background-color: {ThemeManager.get_current_theme().SURFACE};
-                border: 1px solid {ThemeManager.get_current_theme().BORDER};
-                border-radius: 14px;
+                background-color: {current_theme.SURFACE};
+                border: 1px solid {current_theme.BORDER};
+                border-radius: 16px;
                 margin: 1px;
             }}
         """)
         self.shadow_effect = QGraphicsDropShadowEffect(self.container)
-        self.shadow_effect.setBlurRadius(8)
-        self.shadow_effect.setOffset(0, 4)
-        self.shadow_effect.setColor(QColor(0, 0, 0, 120))
+        self.shadow_effect.setBlurRadius(10)
+        self.shadow_effect.setOffset(0, 6)
+        self.shadow_effect.setColor(QColor(current_theme.SHADOW))
         self.container.setGraphicsEffect(self.shadow_effect)
         self.shadow_anim = QPropertyAnimation(self.shadow_effect, b"blurRadius", self)
         self.shadow_anim.setDuration(160)
@@ -61,16 +62,16 @@ class AccountWidget(QFrame):
         
         # Layout for the container - minimal padding
         layout = QHBoxLayout(self.container)
-        layout.setContentsMargins(8, 8, 8, 8)  # Minimal container padding
-        layout.setSpacing(12)  # Reduced spacing between elements
+        layout.setContentsMargins(10, 10, 10, 10)  # Balanced container padding
+        layout.setSpacing(14)  # Slightly more spacing between elements
         
         # Avatar container with proper centering
         avatar_container = QFrame()
         avatar_container.setFixedSize(60, 60)  # Slightly larger avatar
         avatar_container.setStyleSheet(f"""
             QFrame {{
-                background-color: {ThemeManager.get_current_theme().ACCENT};
-                border-radius: 12px;
+                background-color: {current_theme.ACCENT};
+                border-radius: 14px;
                 border: none;
             }}
         """)
@@ -84,7 +85,7 @@ class AccountWidget(QFrame):
         self.avatar_label.setStyleSheet(f"""
             QLabel {{
                 background-color: transparent;
-                color: {ThemeManager.get_current_theme().TEXT_PRIMARY};
+                color: {current_theme.TEXT_PRIMARY};
                 font-size: 24px;
                 font-weight: bold;
                 border: none;
@@ -108,7 +109,7 @@ class AccountWidget(QFrame):
         self.name_label.setFont(QFont("Segoe UI", 15, QFont.Bold))
         self.name_label.setStyleSheet(f"""
             QLabel {{
-                color: {ThemeManager.get_current_theme().TEXT_PRIMARY};
+                color: {current_theme.TEXT_PRIMARY};
                 background-color: transparent;
                 border: none;
             }}
@@ -121,7 +122,7 @@ class AccountWidget(QFrame):
         self.steamid_label.setFont(QFont("Segoe UI", 11))
         self.steamid_label.setStyleSheet(f"""
             QLabel {{
-                color: {ThemeManager.get_current_theme().TEXT_SECONDARY};
+                color: {current_theme.TEXT_SECONDARY};
                 background-color: transparent;
                 border: none;
             }}
@@ -182,7 +183,7 @@ class AccountWidget(QFrame):
             QFrame {{
                 background-color: {background_color};
                 border: 1px solid {border_color};
-                border-radius: 14px;
+                border-radius: 16px;
                 margin: 1px;
             }}
         """)

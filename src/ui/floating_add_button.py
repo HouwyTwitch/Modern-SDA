@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 
 # Import account management classes
 from src.account_manager import AccountData, AccountManager, AuthenticationManager, ConfirmationManager
-from src.theme import ThemeManager, NoctuaTheme
+from src.theme import ThemeManager
 
 
 class FloatingAddButton(QPushButton):
@@ -52,7 +52,7 @@ class FloatingAddButton(QPushButton):
             QPushButton {{
                 background-color: {current_theme.ACCENT};
                 border: none;
-                border-radius: 12px;
+                border-radius: 28px;
                 font-size: 24px;
                 font-weight: bold;
                 color: {current_theme.TEXT_PRIMARY};
