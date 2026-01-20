@@ -3,8 +3,9 @@ from PyQt5.QtWidgets import (
     QPushButton, QVBoxLayout, QLabel
 )
 from src.theme import ThemeManager
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QGraphicsOpacityEffect
 
 
 class NavigationButton(QPushButton):
@@ -40,6 +41,9 @@ class NavigationButton(QPushButton):
                 padding: 0px;
             }
         """)
+        self.icon_opacity = QGraphicsOpacityEffect(self.icon_label)
+        self.icon_label.setGraphicsEffect(self.icon_opacity)
+        self.icon_opacity.setOpacity(0.85)
         layout.addWidget(self.icon_label, 0, Qt.AlignCenter)  # Center the icon
         
         # Text label
@@ -54,11 +58,21 @@ class NavigationButton(QPushButton):
                 padding: 0px;
             }
         """)
+        self.label_opacity = QGraphicsOpacityEffect(self.label)
+        self.label.setGraphicsEffect(self.label_opacity)
+        self.label_opacity.setOpacity(0.85)
         layout.addWidget(self.label, 0, Qt.AlignCenter)  # Center the text
         
         # Set minimum width based on text
         text_width = self.label.fontMetrics().horizontalAdvance(self.text_label)
         self.setFixedWidth(max(text_width + 32, 80))  # Minimum 80px or text width + padding
+
+        self.icon_opacity_anim = QPropertyAnimation(self.icon_opacity, b"opacity", self)
+        self.icon_opacity_anim.setDuration(180)
+        self.icon_opacity_anim.setEasingCurve(QEasingCurve.OutCubic)
+        self.label_opacity_anim = QPropertyAnimation(self.label_opacity, b"opacity", self)
+        self.label_opacity_anim.setDuration(180)
+        self.label_opacity_anim.setEasingCurve(QEasingCurve.OutCubic)
         
         self.update_style()
     
@@ -85,6 +99,9 @@ class NavigationButton(QPushButton):
         icon = current_theme.create_svg_icon(self.svg_icon, icon_color, 24)
         pixmap = icon.pixmap(24, 24)
         self.icon_label.setPixmap(pixmap)
+
+        target_opacity = 1.0 if self.is_active else 0.8
+        self._animate_opacity(target_opacity)
         
         # Update button style
         if self.is_active:
@@ -118,6 +135,7 @@ class NavigationButton(QPushButton):
             icon = current_theme.create_svg_icon(self.svg_icon, current_theme.TEXT_PRIMARY, 24)
             pixmap = icon.pixmap(24, 24)
             self.icon_label.setPixmap(pixmap)
+            self._animate_opacity(1.0)
         super().enterEvent(event)
     
     def leaveEvent(self, event):
@@ -128,4 +146,15 @@ class NavigationButton(QPushButton):
             icon = current_theme.create_svg_icon(self.svg_icon, current_theme.TEXT_SECONDARY, 24)
             pixmap = icon.pixmap(24, 24)
             self.icon_label.setPixmap(pixmap)
+            self._animate_opacity(0.8)
         super().leaveEvent(event)
+
+    def _animate_opacity(self, value: float):
+        self.icon_opacity_anim.stop()
+        self.label_opacity_anim.stop()
+        self.icon_opacity_anim.setStartValue(self.icon_opacity.opacity())
+        self.label_opacity_anim.setStartValue(self.label_opacity.opacity())
+        self.icon_opacity_anim.setEndValue(value)
+        self.label_opacity_anim.setEndValue(value)
+        self.icon_opacity_anim.start()
+        self.label_opacity_anim.start()

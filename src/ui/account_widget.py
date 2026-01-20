@@ -3,8 +3,9 @@ from PyQt5.QtWidgets import (
     QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
 )
 from src.theme import ThemeManager
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
+from PyQt5.QtGui import QFont, QPixmap, QColor
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 
 # Import account management classes
 from src.account_manager import AccountData
@@ -44,6 +45,14 @@ class AccountWidget(QFrame):
                 margin: 1px;
             }}
         """)
+        self.shadow_effect = QGraphicsDropShadowEffect(self.container)
+        self.shadow_effect.setBlurRadius(8)
+        self.shadow_effect.setOffset(0, 4)
+        self.shadow_effect.setColor(QColor(0, 0, 0, 120))
+        self.container.setGraphicsEffect(self.shadow_effect)
+        self.shadow_anim = QPropertyAnimation(self.shadow_effect, b"blurRadius", self)
+        self.shadow_anim.setDuration(160)
+        self.shadow_anim.setEasingCurve(QEasingCurve.OutCubic)
         
         # Layout for the main widget - minimal margins
         main_layout = QVBoxLayout(self)
@@ -177,6 +186,12 @@ class AccountWidget(QFrame):
                 margin: 1px;
             }}
         """)
+        if self.is_selected:
+            self._animate_shadow(20)
+        elif self.is_hovered:
+            self._animate_shadow(14)
+        else:
+            self._animate_shadow(8)
     
     def load_avatar(self):
         """Load avatar image from URL"""
@@ -194,3 +209,9 @@ class AccountWidget(QFrame):
         # Fallback: first letter of account name
         if self.account.account_name:
             self.avatar_label.setText(self.account.account_name[0].upper())
+
+    def _animate_shadow(self, blur_radius: int):
+        self.shadow_anim.stop()
+        self.shadow_anim.setStartValue(self.shadow_effect.blurRadius())
+        self.shadow_anim.setEndValue(blur_radius)
+        self.shadow_anim.start()
