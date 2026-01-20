@@ -2,7 +2,7 @@ from typing import List, Dict, Optional
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QScrollArea, QFrame
 )
-from src.theme import ThemeManager, NoctuaTheme
+from src.theme import ThemeManager
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QFont, QClipboard
 from PyQt5.QtWidgets import QApplication
@@ -26,6 +26,7 @@ class AccountsScreen(QWidget):
     
     def setup_ui(self):
         """Setup the accounts screen UI"""
+        current_theme = ThemeManager.get_current_theme()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(20)
@@ -39,7 +40,7 @@ class AccountsScreen(QWidget):
         self.title_label.setFont(QFont("Segoe UI", 26, QFont.Bold))
         self.title_label.setStyleSheet(f"""
             QLabel {{
-                color: {NoctuaTheme.TEXT_PRIMARY};
+                color: {current_theme.TEXT_PRIMARY};
                 margin-bottom: 4px;
             }}
         """)
@@ -52,7 +53,7 @@ class AccountsScreen(QWidget):
         # Subtitle - account selection status
         self.subtitle_label = QLabel("No account was selected")
         self.subtitle_label.setFont(QFont("Segoe UI", 12))
-        self.subtitle_label.setStyleSheet(f"color: {NoctuaTheme.TEXT_SECONDARY};")
+        self.subtitle_label.setStyleSheet(f"color: {current_theme.TEXT_SECONDARY};")
         self.subtitle_label.setAlignment(Qt.AlignCenter)
         header_layout.addWidget(self.subtitle_label)
         

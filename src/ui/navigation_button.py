@@ -90,10 +90,12 @@ class NavigationButton(QPushButton):
             icon_color = current_theme.TEXT_PRIMARY
             text_color = current_theme.TEXT_PRIMARY
             bg_color = current_theme.ACCENT
+            border_color = current_theme.ACCENT_HOVER
         else:
             icon_color = current_theme.TEXT_SECONDARY
             text_color = current_theme.TEXT_SECONDARY
             bg_color = "transparent"
+            border_color = "transparent"
         
         # Create colored icon
         icon = current_theme.create_svg_icon(self.svg_icon, icon_color, 24)
@@ -108,8 +110,8 @@ class NavigationButton(QPushButton):
             self.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {bg_color};
-                    border: none;
-                    border-radius: 12px;
+                    border: 1px solid {border_color};
+                    border-radius: 14px;
                     color: {text_color};
                 }}
             """)
@@ -117,12 +119,13 @@ class NavigationButton(QPushButton):
             self.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {bg_color};
-                    border: none;
-                    border-radius: 12px;
+                    border: 1px solid {border_color};
+                    border-radius: 14px;
                     color: {text_color};
                 }}
                 QPushButton:hover {{
                     background-color: {current_theme.SURFACE_HOVER};
+                    border-color: {current_theme.BORDER_FOCUS};
                     color: {current_theme.TEXT_PRIMARY};
                 }}
             """)

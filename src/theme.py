@@ -14,21 +14,21 @@ class NoctuaTheme:
     """Noctua-inspired color palette"""
     
     # Colors
-    BACKGROUND = "#1A1611"      # Very dark brown
-    SURFACE = "#251F18"        # Dark brown surface
-    SURFACE_ELEVATED = "#332A21"  # Elevated surface
-    SURFACE_HOVER = "#3D332A"   # Hover surface
-    ACCENT = "#8B7355"         # Noctua brown
-    ACCENT_HOVER = "#A08968"   # Lighter brown for hover
-    ACCENT_PRESSED = "#786349" # Pressed state
-    TEXT_PRIMARY = "#F0EBE1"   # Light beige
-    TEXT_SECONDARY = "#C4B9A7" # Muted beige
-    TEXT_TERTIARY = "#9A8F7E" # Even more muted
-    BORDER = "#453A30"        # Border color
-    BORDER_FOCUS = "#6B5D4F"  # Focused border
-    SUCCESS = "#6B8B47"       # Success green with brown tint
-    ERROR = "#B85C57"         # Error red with brown tint
-    SHADOW = "#0F0D0A"        # Shadow color
+    BACKGROUND = "#0F1115"      # Deep charcoal
+    SURFACE = "#151A22"        # Dark slate surface
+    SURFACE_ELEVATED = "#1B2230"  # Elevated surface
+    SURFACE_HOVER = "#222A36"   # Hover surface
+    ACCENT = "#5B8CFF"         # Modern blue
+    ACCENT_HOVER = "#6EA0FF"   # Lighter blue hover
+    ACCENT_PRESSED = "#3D6BE6" # Pressed state
+    TEXT_PRIMARY = "#F5F7FF"   # Soft white
+    TEXT_SECONDARY = "#B7C0D1" # Muted gray-blue
+    TEXT_TERTIARY = "#8A94A6" # Subtle gray-blue
+    BORDER = "#2A3342"        # Border color
+    BORDER_FOCUS = "#5B8CFF"  # Focused border
+    SUCCESS = "#45C486"       # Success green
+    ERROR = "#F26B6B"         # Error red
+    SHADOW = "#06070A"        # Shadow color
     
     @staticmethod
     def create_svg_icon(svg_content: str, color: str, size: int = 24) -> QIcon:
@@ -113,13 +113,17 @@ class NoctuaTheme:
         
         QLineEdit {{
             background-color: {theme.SURFACE_ELEVATED};
-            border: 2px solid {theme.BORDER};
-            border-radius: 10px;
+            border: 1px solid {theme.BORDER};
+            border-radius: 12px;
             padding: 14px 18px;
             font-size: 14px;
             color: {theme.TEXT_PRIMARY};
             selection-background-color: {theme.ACCENT};
             selection-color: {theme.TEXT_PRIMARY};
+        }}
+
+        QLineEdit:hover {{
+            border-color: {theme.BORDER_FOCUS};
         }}
         
         QLineEdit:focus {{
@@ -134,7 +138,7 @@ class NoctuaTheme:
         QPushButton {{
             background-color: {theme.ACCENT};
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 14px 24px;
             font-size: 14px;
             font-weight: 600;
@@ -154,6 +158,28 @@ class NoctuaTheme:
             background-color: {theme.SURFACE};
             border: 1px solid {theme.BORDER};
             border-radius: 12px;
+        }}
+
+        QComboBox {{
+            background-color: {theme.SURFACE_ELEVATED};
+            border: 1px solid {theme.BORDER};
+            border-radius: 10px;
+            padding: 8px 12px;
+            color: {theme.TEXT_PRIMARY};
+        }}
+
+        QComboBox:hover {{
+            border-color: {theme.BORDER_FOCUS};
+        }}
+
+        QComboBox::drop-down {{
+            border: none;
+            width: 28px;
+        }}
+
+        QComboBox::down-arrow {{
+            image: none;
+            border: none;
         }}
         
         QFormLayout QLabel {{
@@ -197,6 +223,14 @@ class NoctuaTheme:
         
         QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
             background: none;
+        }}
+
+        QToolTip {{
+            background-color: {theme.SURFACE_ELEVATED};
+            color: {theme.TEXT_PRIMARY};
+            border: 1px solid {theme.BORDER};
+            border-radius: 8px;
+            padding: 6px 8px;
         }}
         """
 
