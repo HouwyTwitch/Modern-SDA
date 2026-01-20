@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QApplication
 
 # Import account management classes
 from src.account_manager import AccountData
+from src.settings import SettingsManager
 
 
 class AccountsScreen(QWidget):
@@ -22,6 +23,7 @@ class AccountsScreen(QWidget):
         self.parent_window = parent
         self.selected_account = None
         self.refresh_timer = None
+        self.copy_on_click_enabled = SettingsManager.get_setting("copy_code_on_click")
         self.setup_ui()
     
     def setup_ui(self):
@@ -87,7 +89,11 @@ class AccountsScreen(QWidget):
     
     def on_code_clicked(self, event):
         """Handle click on the auth code label to copy to clipboard"""
-        if self.selected_account and hasattr(self, 'title_label'):
+        if (
+            self.selected_account
+            and self.copy_on_click_enabled
+            and hasattr(self, 'title_label')
+        ):
             code = self.title_label.text()
             if code and code != "SDA" and code != "...":
                 clipboard = QApplication.clipboard()
@@ -103,10 +109,11 @@ class AccountsScreen(QWidget):
         """Start automatic refresh of the auth code every second"""
         if self.refresh_timer:
             self.refresh_timer.stop()
-        
+
         self.refresh_timer = QTimer()
         self.refresh_timer.timeout.connect(self.refresh_auth_code)
-        self.refresh_timer.start(1000)  # Refresh every 1 second
+        interval_ms = SettingsManager.get_setting("auto_refresh_interval_seconds") * 1000
+        self.refresh_timer.start(interval_ms)
     
     def stop_auto_refresh(self):
         """Stop automatic refresh"""
@@ -124,7 +131,16 @@ class AccountsScreen(QWidget):
     def set_selected_account(self, account):
         """Set the selected account and start auto-refresh"""
         self.selected_account = account
-        if account:
+        if account and SettingsManager.get_setting("auto_refresh_enabled"):
+            self.start_auto_refresh()
+        else:
+            self.stop_auto_refresh()
+
+    def apply_settings(self):
+        """Apply settings to the account screen behavior."""
+        self.copy_on_click_enabled = SettingsManager.get_setting("copy_code_on_click")
+        auto_refresh_enabled = SettingsManager.get_setting("auto_refresh_enabled")
+        if self.selected_account and auto_refresh_enabled:
             self.start_auto_refresh()
         else:
             self.stop_auto_refresh()

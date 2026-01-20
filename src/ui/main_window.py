@@ -11,6 +11,7 @@ from PyQt5.QtGui import QFont
 # Import account management classes
 from src.account_manager import AccountData, AccountManager, AuthenticationManager, ConfirmationManager
 from src.theme import ThemeManager
+from src.settings import SettingsManager
 from src.ui.account_widget import AccountWidget
 from src.ui.add_account_dialog import AddAccountDialog
 from src.ui.navigation_button import NavigationButton
@@ -25,6 +26,8 @@ class SteamAuthenticatorGUI(QMainWindow):
     
     def __init__(self):
         super().__init__()
+        SettingsManager.load_settings()
+        ThemeManager.set_theme(SettingsManager.get_setting("theme"))
         # Initialize account management
         self.account_manager = AccountManager()
         self.auth_manager = AuthenticationManager()
@@ -38,6 +41,7 @@ class SteamAuthenticatorGUI(QMainWindow):
         
         # Initialize UI first
         self.init_ui()
+        self.apply_settings()
         
         # Connect account management signals after UI is initialized
         self.account_manager.account_added.connect(self.on_account_added)
@@ -210,6 +214,11 @@ class SteamAuthenticatorGUI(QMainWindow):
         # Update settings screen if it exists
         if hasattr(self, 'settings_screen') and self.settings_screen:
             self.settings_screen.update_combo_style()
+
+    def apply_settings(self):
+        """Apply non-theme settings to relevant screens."""
+        if hasattr(self, 'accounts_screen') and self.accounts_screen:
+            self.accounts_screen.apply_settings()
     
     def position_floating_button(self):
         """Position the floating add button"""
