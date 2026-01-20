@@ -136,14 +136,15 @@ class AccountWidget(QFrame):
         actions_container = QFrame()
         actions_layout = QVBoxLayout(actions_container)
         actions_layout.setContentsMargins(0, 0, 0, 0)
-        actions_layout.setSpacing(8)
+        actions_layout.setSpacing(6)
+        actions_layout.setAlignment(Qt.AlignVCenter)
 
         self.edit_button = QPushButton("Edit")
-        self.edit_button.setFixedSize(70, 32)
+        self.edit_button.setFixedSize(80, 32)
         self.edit_button.clicked.connect(lambda: self.edit_requested.emit(self.account))
 
         self.remove_button = QPushButton("Remove")
-        self.remove_button.setFixedSize(70, 32)
+        self.remove_button.setFixedSize(80, 32)
         self.remove_button.clicked.connect(lambda: self.remove_requested.emit(self.account))
 
         actions_layout.addWidget(self.edit_button)
