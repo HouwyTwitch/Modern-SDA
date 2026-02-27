@@ -115,26 +115,30 @@ class AccountWidget(QFrame):
 
         layout.addWidget(info_container, 1)
 
-        # ── Action buttons  (28 px tall × 2 + 4 px gap = 60 px, fits fine) ─
-        actions_container = QFrame()
-        actions_container.setFixedWidth(82)
-        actions_layout = QVBoxLayout(actions_container)
+        # ── Action buttons (icon-only, side-by-side, shown on hover) ─────────
+        self.actions_container = QFrame()
+        self.actions_container.setFixedWidth(80)
+        self.actions_container.setStyleSheet("background-color: transparent; border: none;")
+        self.actions_container.setVisible(False)
+        actions_layout = QHBoxLayout(self.actions_container)
         actions_layout.setContentsMargins(0, 0, 0, 0)
-        actions_layout.setSpacing(4)
-        actions_layout.setAlignment(Qt.AlignVCenter)
+        actions_layout.setSpacing(6)
+        actions_layout.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
 
-        self.edit_button = QPushButton("Edit")
-        self.edit_button.setFixedSize(82, 28)
+        self.edit_button = QPushButton("✎")
+        self.edit_button.setFixedSize(34, 34)
+        self.edit_button.setToolTip("Edit account")
         self.edit_button.clicked.connect(lambda: self.edit_requested.emit(self.account))
 
-        self.remove_button = QPushButton("Remove")
-        self.remove_button.setFixedSize(82, 28)
+        self.remove_button = QPushButton("✕")
+        self.remove_button.setFixedSize(34, 34)
+        self.remove_button.setToolTip("Remove account")
         self.remove_button.clicked.connect(lambda: self.remove_requested.emit(self.account))
 
         actions_layout.addWidget(self.edit_button)
         actions_layout.addWidget(self.remove_button)
 
-        layout.addWidget(actions_container, 0, Qt.AlignRight | Qt.AlignVCenter)
+        layout.addWidget(self.actions_container, 0, Qt.AlignRight | Qt.AlignVCenter)
 
         self.setMouseTracking(True)
         self.container.setMouseTracking(True)
@@ -144,13 +148,15 @@ class AccountWidget(QFrame):
     # ── Mouse events ──────────────────────────────────────────────────────
 
     def enterEvent(self, event):
-        if not self.is_selected:
-            self.is_hovered = True
-            self.update_style()
+        self.is_hovered = True
+        self.actions_container.setVisible(True)
+        self.update_style()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
         self.is_hovered = False
+        if not self.is_selected:
+            self.actions_container.setVisible(False)
         self.update_style()
         super().leaveEvent(event)
 
@@ -163,6 +169,7 @@ class AccountWidget(QFrame):
 
     def set_selected(self, selected: bool):
         self.is_selected = selected
+        self.actions_container.setVisible(selected or self.is_hovered)
         self.update_style()
 
     def update_style(self):
@@ -211,54 +218,53 @@ class AccountWidget(QFrame):
         current_theme = ThemeManager.get_current_theme()
 
         if self.is_selected:
-            self.edit_button.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: rgba(255,255,255,35);
-                    border: 1px solid rgba(255,255,255,60);
-                    border-radius: 4px;
-                    color: {current_theme.TEXT_PRIMARY};
-                    font-size: 11px; font-weight: 600;
-                }}
-                QPushButton:hover {{ background-color: rgba(255,255,255,65); }}
-            """)
-            self.remove_button.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: rgba(255,80,80,35);
-                    border: 1px solid rgba(255,80,80,70);
-                    border-radius: 4px;
-                    color: {current_theme.TEXT_PRIMARY};
-                    font-size: 11px; font-weight: 600;
-                }}
-                QPushButton:hover {{ background-color: rgba(255,80,80,75); }}
-            """)
+            edit_bg   = "rgba(255,255,255,40)"
+            edit_border = "rgba(255,255,255,80)"
+            edit_hover  = "rgba(255,255,255,70)"
         else:
-            self.edit_button.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {current_theme.SURFACE_HOVER};
-                    border: 1px solid {current_theme.BORDER};
-                    border-radius: 4px;
-                    color: {current_theme.TEXT_PRIMARY};
-                    font-size: 11px; font-weight: 600;
-                }}
-                QPushButton:hover {{
-                    background-color: {current_theme.ACCENT};
-                    border-color: {current_theme.BORDER_FOCUS};
-                }}
-            """)
-            self.remove_button.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: transparent;
-                    border: 1px solid {current_theme.BORDER};
-                    border-radius: 4px;
-                    color: {current_theme.TEXT_SECONDARY};
-                    font-size: 11px; font-weight: 600;
-                }}
-                QPushButton:hover {{
-                    background-color: {current_theme.ERROR};
-                    border-color: {current_theme.ERROR};
-                    color: {current_theme.TEXT_PRIMARY};
-                }}
-            """)
+            edit_bg   = current_theme.SURFACE_ELEVATED
+            edit_border = current_theme.BORDER
+            edit_hover  = current_theme.ACCENT
+
+        self.edit_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {edit_bg};
+                border: 1px solid {edit_border};
+                border-radius: 17px;
+                color: {current_theme.TEXT_PRIMARY};
+                font-size: 15px;
+            }}
+            QPushButton:hover {{
+                background-color: {edit_hover};
+                border-color: {current_theme.BORDER_FOCUS};
+            }}
+        """)
+
+        if self.is_selected:
+            rem_bg     = "rgba(255,80,80,40)"
+            rem_border = "rgba(255,80,80,80)"
+            rem_hover  = "rgba(255,80,80,80)"
+            rem_color  = current_theme.TEXT_PRIMARY
+        else:
+            rem_bg     = current_theme.SURFACE_ELEVATED
+            rem_border = current_theme.BORDER
+            rem_hover  = current_theme.ERROR
+            rem_color  = current_theme.TEXT_SECONDARY
+
+        self.remove_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {rem_bg};
+                border: 1px solid {rem_border};
+                border-radius: 17px;
+                color: {rem_color};
+                font-size: 13px;
+            }}
+            QPushButton:hover {{
+                background-color: {rem_hover};
+                border-color: {current_theme.ERROR};
+                color: {current_theme.TEXT_PRIMARY};
+            }}
+        """)
 
     # ── Avatar ────────────────────────────────────────────────────────────
 
