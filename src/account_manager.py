@@ -188,8 +188,8 @@ class AccountManager(QObject):
             
             # Emit signal for UI update
             self.account_added.emit(account)
-            # Fetch avatar in background (non-blocking)
-            QTimer.singleShot(0, lambda acc=account: self._fetch_avatar_async(acc))
+            # Fetch avatar in a real background thread (non-blocking)
+            threading.Thread(target=self._fetch_avatar_async, args=(account,), daemon=True).start()
             
             return {'success': True, 'account': account}
             
@@ -282,9 +282,9 @@ class AccountManager(QObject):
             
             self.accounts = [AccountData.from_dict(data) for data in accounts_data]
             self.accounts_loaded.emit()
-            # Trigger avatar fetch for all accounts to refresh to highest quality once
+            # Trigger avatar fetch for all accounts in background threads
             for account in self.accounts:
-                QTimer.singleShot(0, lambda acc=account: self._fetch_avatar_async(acc))
+                threading.Thread(target=self._fetch_avatar_async, args=(account,), daemon=True).start()
             return True
             
         except Exception as e:

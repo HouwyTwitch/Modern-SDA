@@ -355,49 +355,46 @@ class ConfirmationsScreen(QWidget):
         """Handle completion of confirmation loading"""
         if not self.selected_account or self.selected_account != account:
             return  # Account changed while loading
-        
+
         try:
             if loader.error:
                 print(f"Error loading confirmations: {loader.error}")
-                # Show message instead of fake data; ensure we really requested
-                QMessageBox.warning(self, "Load Error", f"Failed to load confirmations: {loader.error}")
+                # Show inline error state instead of blocking popup
+                self._show_error_state(f"Failed to load: {loader.error}")
                 return
-            
+
             result = loader.result
             if not result or not result.get('success', False):
                 error_text = result.get('error', 'Unknown error') if isinstance(result, dict) else 'Unknown error'
                 print(f"Failed to load confirmations: {error_text}")
-                QMessageBox.information(self, "No Confirmations", error_text)
+                self.show_no_confirmations()
                 return
-            
+
             # Clear existing items before rendering new list to avoid duplicates
             self.clear_confirmations()
-            # Get confirmations from result
             confirmations = result.get('confirmations', [])
-            
+
             if not confirmations:
                 self.show_no_confirmations()
             else:
                 self.show_confirmations()
                 for confirmation in confirmations:
-                    # Extract type and description from the confirmation
                     conf_type = confirmation.get('type', 'UNKNOWN')
-                    # Prefer headline provided by backend, fall back to summary-based description
                     description = confirmation.get('description')
                     if not description:
                         summary = confirmation.get('summary') or ''
                         if conf_type == 'TRADE':
                             description = f"Trade: {summary}"
-                        elif conf_type == 'LISTING' or conf_type == 'MARKET':
+                        elif conf_type in ('LISTING', 'MARKET'):
                             description = f"Market: {summary}"
                         else:
                             description = f"Confirmation {confirmation.get('id', 'N/A')}"
                     confirmation_id = str(confirmation.get('id', ''))
                     self.add_confirmation_item(conf_type, description, confirmation_id)
-                    
+
         except Exception as e:
             print(f"Error processing confirmations: {e}")
-            QMessageBox.warning(self, "Error", "Failed to process confirmations")
+            self._show_error_state("Failed to process confirmations")
     
     def _load_sample_confirmations_for_account(self, account):
         """Load sample confirmations for demonstration"""
@@ -631,31 +628,44 @@ class ConfirmationsScreen(QWidget):
         try:
             if processor.error:
                 print(f"Error processing confirmation: {processor.error}")
-                QMessageBox.warning(self, "Error", f"Failed to process confirmation: {processor.error}")
+                # Restore item to the list so user can retry — just show a brief status
+                self._show_error_state(f"Could not process: {processor.error}", temporary=True)
                 return
-            
+
             result = processor.result
             if not result or not result.get('success', False):
-                error_msg = result.get('error', 'Unknown error')
+                error_msg = result.get('error', 'Unknown error') if isinstance(result, dict) else 'Unknown error'
                 print(f"Failed to process confirmation: {error_msg}")
-                QMessageBox.warning(self, "Error", f"Failed to process confirmation: {error_msg}")
+                self._show_error_state(f"Could not process: {error_msg}", temporary=True)
                 return
-            
-            # Show success message
-            action = "accepted" if result.get('accepted', False) else "declined"
-            QMessageBox.information(self, "Success", f"Confirmation {action} successfully")
-            
-            # Remove the confirmation from the UI
-            # Find and remove the confirmation item
-            item_to_remove = None
-            for item in self.confirmation_items:
-                if item.confirmation_id == confirmation_id:
-                    item_to_remove = item
-                    break
-            
-            if item_to_remove:
-                self.remove_confirmation_item(item_to_remove)
-            
+
+            # Success — item was already removed from the UI in on_accept/decline_confirmation.
+            # If the list is now empty, show the no-confirmations state.
+            if not self.confirmation_items:
+                self.show_no_confirmations()
+
         except Exception as e:
             print(f"Error handling confirmation result: {e}")
-            QMessageBox.warning(self, "Error", "Failed to handle confirmation result")
+
+    def _show_error_state(self, message: str, temporary: bool = False):
+        """Display an inline error message (never a blocking popup)."""
+        current_theme = ThemeManager.get_current_theme()
+        self.status_container.setVisible(True)
+        self.confirmations_container.setVisible(False)
+        self.refresh_button.setEnabled(True)
+        self.is_loading = False
+
+        self.status_icon.setText("⚠️")
+        self.status_icon.setStyleSheet(f"color: {current_theme.ERROR};")
+        self.status_text.setText(message)
+        self.status_text.setStyleSheet(f"color: {current_theme.TEXT_SECONDARY};")
+
+        if temporary:
+            # Auto-clear after 3 s and restore the confirmations list view
+            QTimer.singleShot(3000, self._restore_confirmations_view)
+
+    def _restore_confirmations_view(self):
+        if self.confirmation_items:
+            self.show_confirmations()
+        else:
+            self.show_no_confirmations()

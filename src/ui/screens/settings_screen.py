@@ -64,8 +64,9 @@ class SettingsScreen(QWidget):
         scroll_layout.setContentsMargins(20, 20, 20, 20)
         scroll_layout.setSpacing(20)
         
-        # Settings container (original single container)
+        # Settings container (stored so update_combo_style can re-style it)
         settings_container = QFrame()
+        self.settings_container = settings_container
         settings_container.setStyleSheet(f"""
             QFrame {{
                 background-color: {ThemeManager.get_current_theme().SURFACE_ELEVATED};
@@ -169,7 +170,19 @@ class SettingsScreen(QWidget):
 
     
     def update_combo_style(self):
-        """Update combo box styling with current theme"""
+        """Update combo box styling and all dynamic elements with current theme."""
+        current_theme = ThemeManager.get_current_theme()
+
+        # Re-style the settings card (stored during setup_ui)
+        if hasattr(self, 'settings_container') and self.settings_container:
+            self.settings_container.setStyleSheet(f"""
+                QFrame {{
+                    background-color: {current_theme.SURFACE_ELEVATED};
+                    border-radius: 12px;
+                    margin: 0px;
+                }}
+            """)
+
         if self.theme_combo:
             current_theme = ThemeManager.get_current_theme()
             style = f"""

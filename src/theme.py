@@ -27,7 +27,9 @@ class NoctuaTheme:
     BORDER = "#2A3342"        # Border color
     BORDER_FOCUS = "#5B8CFF"  # Focused border
     SUCCESS = "#45C486"       # Success green
+    SUCCESS_HOVER = "#38A872" # Darker success green
     ERROR = "#F26B6B"         # Error red
+    ERROR_HOVER = "#D95959"   # Darker error red
     SHADOW = "#06070A"        # Shadow color
     
     @staticmethod
@@ -252,25 +254,27 @@ class LightTheme:
     BORDER = "#E0E0E0"          # Border color
     BORDER_FOCUS = "#2196F3"    # Focused border
     SUCCESS = "#4CAF50"         # Green
+    SUCCESS_HOVER = "#3D9142"   # Darker green
     ERROR = "#F44336"           # Red
+    ERROR_HOVER = "#D32F2F"     # Darker red
     SHADOW = "#000000"          # Shadow color
-    
+
     @staticmethod
     def create_svg_icon(svg_content: str, color: str, size: int = 24):
         return NoctuaTheme.create_svg_icon(svg_content, color, size)
-    
+
     @staticmethod
     def get_accounts_svg():
         return NoctuaTheme.get_accounts_svg()
-    
+
     @staticmethod
     def get_confirmations_svg():
         return NoctuaTheme.get_confirmations_svg()
-    
+
     @staticmethod
     def get_settings_svg():
         return NoctuaTheme.get_settings_svg()
-    
+
     @staticmethod
     def get_stylesheet():
         return NoctuaTheme.get_stylesheet().replace(NoctuaTheme.BACKGROUND, LightTheme.BACKGROUND)\
@@ -306,25 +310,27 @@ class DarkTheme:
     BORDER = "#333333"          # Border color
     BORDER_FOCUS = "#BB86FC"    # Focused border
     SUCCESS = "#4CAF50"         # Green
+    SUCCESS_HOVER = "#3D9142"   # Darker green
     ERROR = "#CF6679"           # Red
+    ERROR_HOVER = "#B85566"     # Darker red
     SHADOW = "#000000"          # Shadow color
-    
+
     @staticmethod
     def create_svg_icon(svg_content: str, color: str, size: int = 24):
         return NoctuaTheme.create_svg_icon(svg_content, color, size)
-    
+
     @staticmethod
     def get_accounts_svg():
         return NoctuaTheme.get_accounts_svg()
-    
+
     @staticmethod
     def get_confirmations_svg():
         return NoctuaTheme.get_confirmations_svg()
-    
+
     @staticmethod
     def get_settings_svg():
         return NoctuaTheme.get_settings_svg()
-    
+
     @staticmethod
     def get_stylesheet():
         return NoctuaTheme.get_stylesheet().replace(NoctuaTheme.BACKGROUND, DarkTheme.BACKGROUND)\
@@ -359,7 +365,9 @@ class OceanTheme:
     BORDER = "#234354"
     BORDER_FOCUS = "#2EC4B6"
     SUCCESS = "#4CD99A"
+    SUCCESS_HOVER = "#3DC285"
     ERROR = "#FF6B6B"
+    ERROR_HOVER = "#E55555"
     SHADOW = "#08151C"
 
     @staticmethod
@@ -412,7 +420,9 @@ class ForestTheme:
     BORDER = "#2B3D30"
     BORDER_FOCUS = "#6BCB77"
     SUCCESS = "#5ED092"
+    SUCCESS_HOVER = "#4DB87D"
     ERROR = "#F26B6B"
+    ERROR_HOVER = "#D95959"
     SHADOW = "#0A120D"
 
     @staticmethod
@@ -465,7 +475,9 @@ class SolarTheme:
     BORDER = "#F1C8A0"
     BORDER_FOCUS = "#FF8C42"
     SUCCESS = "#3CB371"
+    SUCCESS_HOVER = "#2E9960"
     ERROR = "#E85D5D"
+    ERROR_HOVER = "#CC4A4A"
     SHADOW = "#D2B48C"
 
     @staticmethod
