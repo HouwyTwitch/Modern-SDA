@@ -101,18 +101,21 @@ class SteamAuthenticatorGUI(QMainWindow):
         
         content_layout.addWidget(self.stacked_widget)
         main_layout.addWidget(content_container)
-        
+
         # Navigation bar
         self.create_navigation_bar()
         main_layout.addWidget(self.nav_bar)
-        
+
         # Floating add button (only visible on accounts screen)
         self.add_button = FloatingAddButton(self)
         self.add_button.clicked.connect(self.show_add_account_dialog)
-        
+
         # Position floating button
         self.position_floating_button()
-        
+
+        # Connect search once here (not per account added)
+        self.accounts_screen.search_input.textChanged.connect(self.filter_accounts)
+
         # Set initial screen
         self.switch_screen(0)
     
@@ -237,10 +240,14 @@ class SteamAuthenticatorGUI(QMainWindow):
             for widget in self.account_widgets:
                 widget.update_style()
         
+        # Update accounts screen dynamic labels
+        if hasattr(self, 'accounts_screen') and self.accounts_screen:
+            self.accounts_screen.update_theme()
+
         # Update confirmations screen if it exists
         if hasattr(self, 'confirmations_screen') and self.confirmations_screen:
             self.confirmations_screen.apply_theme()
-        
+
         # Update settings screen if it exists
         if hasattr(self, 'settings_screen') and self.settings_screen:
             self.settings_screen.update_combo_style()
@@ -332,28 +339,22 @@ class SteamAuthenticatorGUI(QMainWindow):
     
     def on_account_added(self, account: AccountData):
         """Handle account added signal"""
-        # Create account widget and add to UI
         account_widget = AccountWidget(account)
         self.account_widgets.append(account_widget)
-        
-        # Check if accounts screen is ready
+
         if hasattr(self, 'accounts_screen') and self.accounts_screen is not None:
-            # Connect selection signal
             account_widget.account_selected.connect(self.accounts_screen.on_account_selected)
             account_widget.edit_requested.connect(self.show_edit_account_dialog)
             account_widget.remove_requested.connect(self.confirm_remove_account)
-            
-            # Insert before the stretch in the accounts screen
+
+            # Insert before the trailing stretch
             self.accounts_screen.accounts_layout.insertWidget(
-                self.accounts_screen.accounts_layout.count() - 1, 
+                self.accounts_screen.accounts_layout.count() - 1,
                 account_widget
             )
-            
-            # Connect search functionality if not already connected
-            if not self.accounts_screen.search_input.signalsBlocked():
-                self.accounts_screen.search_input.textChanged.connect(self.filter_accounts)
-        else:
-            pass
+
+            # Hide empty state now that at least one account exists
+            self.accounts_screen.set_has_accounts(True)
 
     def show_edit_account_dialog(self, account: AccountData):
         """Show edit account dialog and save changes."""
@@ -497,7 +498,6 @@ class SteamAuthenticatorGUI(QMainWindow):
     
     def on_account_removed(self, steam_id: str):
         """Handle account removed signal"""
-        # Find and remove the account widget
         for widget in self.account_widgets[:]:
             if widget.account.steam_id == steam_id:
                 self.account_widgets.remove(widget)
@@ -506,11 +506,15 @@ class SteamAuthenticatorGUI(QMainWindow):
                 widget.deleteLater()
                 break
 
+        # Show empty state if no accounts remain
+        if not self.account_widgets:
+            self.accounts_screen.set_has_accounts(False)
+
         if self.selected_account and str(self.selected_account.steam_id) == str(steam_id):
             self.selected_account = None
             self.accounts_screen.set_selected_account(None)
             self.accounts_screen.title_label.setText("SDA")
-            self.accounts_screen.subtitle_label.setText("No account was selected")
+            self.accounts_screen.subtitle_label.setText("No account selected")
             if hasattr(self, 'confirmations_screen'):
                 self.confirmations_screen.on_account_selected(None)
         

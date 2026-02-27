@@ -6,17 +6,16 @@ from PyQt5.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QFont, QPixmap, QColor
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 
-# Import account management classes
 from src.account_manager import AccountData
 
 
 class AccountWidget(QFrame):
     """Custom widget for displaying account information"""
-    
-    account_selected = pyqtSignal(object)  # Signal emitted when account is selected
-    edit_requested = pyqtSignal(object)  # Signal emitted when edit is requested
-    remove_requested = pyqtSignal(object)  # Signal emitted when removal is requested
-    
+
+    account_selected = pyqtSignal(object)
+    edit_requested = pyqtSignal(object)
+    remove_requested = pyqtSignal(object)
+
     def __init__(self, account: AccountData, parent=None):
         super().__init__(parent)
         self.account = account
@@ -24,21 +23,16 @@ class AccountWidget(QFrame):
         self.is_selected = False
         self.setup_ui()
         self.load_avatar()
-        # React to avatar updates
-        try:
-            # Parent main window emits account_updated via AccountManager; handled there to refresh widgets
-            pass
-        except Exception:
-            pass
-    
+
     def setup_ui(self):
         """Setup the UI for the account widget"""
-        self.setFixedHeight(96)  # Increased height to prevent clipping
+        self.setFixedHeight(96)
         self.setContentsMargins(0, 0, 0, 0)
-        
-        # Create main container for better styling
-        self.container = QFrame(self)
+
         current_theme = ThemeManager.get_current_theme()
+
+        # Outer container frame
+        self.container = QFrame(self)
         self.container.setStyleSheet(f"""
             QFrame {{
                 background-color: {current_theme.SURFACE};
@@ -47,65 +41,63 @@ class AccountWidget(QFrame):
                 margin: 1px;
             }}
         """)
+
         self.shadow_effect = QGraphicsDropShadowEffect(self.container)
         self.shadow_effect.setBlurRadius(10)
         self.shadow_effect.setOffset(0, 6)
         self.shadow_effect.setColor(QColor(current_theme.SHADOW))
         self.container.setGraphicsEffect(self.shadow_effect)
+
         self.shadow_anim = QPropertyAnimation(self.shadow_effect, b"blurRadius", self)
         self.shadow_anim.setDuration(160)
         self.shadow_anim.setEasingCurve(QEasingCurve.OutCubic)
-        
-        # Layout for the main widget - minimal margins
+
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(2, 2, 2, 2)  # Minimal margins
+        main_layout.setContentsMargins(2, 2, 2, 2)
         main_layout.addWidget(self.container)
-        
-        # Layout for the container - minimal padding
+
         layout = QHBoxLayout(self.container)
-        layout.setContentsMargins(10, 10, 10, 10)  # Balanced container padding
-        layout.setSpacing(14)  # Slightly more spacing between elements
-        
-        # Avatar container with proper centering
-        avatar_container = QFrame()
-        avatar_container.setFixedSize(60, 60)  # Slightly larger avatar
-        avatar_container.setStyleSheet(f"""
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(14)
+
+        # Avatar container (stored as self so update_style can reach it)
+        self.avatar_container = QFrame()
+        self.avatar_container.setFixedSize(60, 60)
+        self.avatar_container.setStyleSheet(f"""
             QFrame {{
                 background-color: {current_theme.ACCENT};
                 border-radius: 14px;
                 border: none;
             }}
         """)
-        
-        # Avatar layout to center the text properly
-        avatar_layout = QVBoxLayout(avatar_container)
+
+        avatar_layout = QVBoxLayout(self.avatar_container)
         avatar_layout.setContentsMargins(0, 0, 0, 0)
         avatar_layout.setSpacing(0)
-        
+
         self.avatar_label = QLabel()
-        self.avatar_label.setStyleSheet(f"""
-            QLabel {{
+        self.avatar_label.setStyleSheet("""
+            QLabel {
                 background-color: transparent;
-                color: {current_theme.TEXT_PRIMARY};
+                color: white;
                 font-size: 24px;
                 font-weight: bold;
                 border: none;
-            }}
+            }
         """)
         self.avatar_label.setAlignment(Qt.AlignCenter)
-        self.avatar_label.setFixedSize(60, 60)  # Match container size
+        self.avatar_label.setFixedSize(60, 60)
         avatar_layout.addWidget(self.avatar_label)
-        
-        layout.addWidget(avatar_container, 0, Qt.AlignVCenter)  # Center vertically without wrapper
-        
-        # Account info container with proper spacing
+
+        layout.addWidget(self.avatar_container, 0, Qt.AlignVCenter)
+
+        # Account info
         info_container = QFrame()
         info_container.setContentsMargins(0, 0, 0, 0)
         info_layout = QVBoxLayout(info_container)
         info_layout.setContentsMargins(0, 0, 0, 0)
-        info_layout.setSpacing(4)  # Reduced spacing to fit text better
-        
-        # Account name
+        info_layout.setSpacing(4)
+
         self.name_label = QLabel(self.account.account_name)
         self.name_label.setFont(QFont("Segoe UI", 15, QFont.Bold))
         self.name_label.setStyleSheet(f"""
@@ -115,10 +107,9 @@ class AccountWidget(QFrame):
                 border: none;
             }}
         """)
-        self.name_label.setWordWrap(False)  # Prevent word wrapping
+        self.name_label.setWordWrap(False)
         info_layout.addWidget(self.name_label)
-        
-        # Steam ID
+
         self.steamid_label = QLabel(f"Steam ID: {self.account.steam_id}")
         self.steamid_label.setFont(QFont("Segoe UI", 11))
         self.steamid_label.setStyleSheet(f"""
@@ -128,11 +119,12 @@ class AccountWidget(QFrame):
                 border: none;
             }}
         """)
-        self.steamid_label.setWordWrap(False)  # Prevent word wrapping
+        self.steamid_label.setWordWrap(False)
         info_layout.addWidget(self.steamid_label)
-        
-        layout.addWidget(info_container, 1)  # Give it stretch factor of 1
 
+        layout.addWidget(info_container, 1)
+
+        # Action buttons
         actions_container = QFrame()
         actions_layout = QVBoxLayout(actions_container)
         actions_layout.setContentsMargins(0, 0, 0, 0)
@@ -151,129 +143,175 @@ class AccountWidget(QFrame):
         actions_layout.addWidget(self.remove_button)
 
         layout.addWidget(actions_container, 0, Qt.AlignRight | Qt.AlignVCenter)
-        
-        # Add hover effect and click functionality
+
         self.setMouseTracking(True)
         self.container.setMouseTracking(True)
-        self.setCursor(Qt.PointingHandCursor)  # Show pointer cursor
+        self.setCursor(Qt.PointingHandCursor)
         self.apply_action_styles()
-    
+
+    # ── Mouse events ──────────────────────────────────────────────────────
+
     def enterEvent(self, event):
-        """Handle mouse enter event"""
         if not self.is_selected:
             self.is_hovered = True
             self.update_style()
         super().enterEvent(event)
-    
+
     def leaveEvent(self, event):
-        """Handle mouse leave event"""
         self.is_hovered = False
         self.update_style()
         super().leaveEvent(event)
-    
+
     def mousePressEvent(self, event):
-        """Handle mouse click for selection"""
-        if event.button() == Qt.LeftButton:
-            if not self.is_selected:
-                self.account_selected.emit(self)
+        if event.button() == Qt.LeftButton and not self.is_selected:
+            self.account_selected.emit(self)
         super().mousePressEvent(event)
-    
+
+    # ── State management ──────────────────────────────────────────────────
+
     def set_selected(self, selected: bool):
-        """Set the selection state of the account"""
         self.is_selected = selected
         self.update_style()
-    
+
     def update_style(self):
-        """Update widget styling based on current state"""
+        """Update widget styling based on hover / selected state."""
         current_theme = ThemeManager.get_current_theme()
-        
+
         if self.is_selected:
-            # Selected state
-            background_color = current_theme.ACCENT
-            border_color = current_theme.ACCENT_HOVER
+            bg = current_theme.ACCENT
+            border = current_theme.ACCENT_HOVER
+            # Slightly lighter accent so avatar is distinguishable
+            avatar_bg = current_theme.ACCENT_HOVER
+            self._animate_shadow(20)
         elif self.is_hovered:
-            # Hover state
-            background_color = current_theme.SURFACE_HOVER
-            border_color = current_theme.BORDER_FOCUS
+            bg = current_theme.SURFACE_HOVER
+            border = current_theme.BORDER_FOCUS
+            avatar_bg = current_theme.ACCENT
+            self._animate_shadow(14)
         else:
-            # Normal state
-            background_color = current_theme.SURFACE
-            border_color = current_theme.BORDER
-        
+            bg = current_theme.SURFACE
+            border = current_theme.BORDER
+            avatar_bg = current_theme.ACCENT
+            self._animate_shadow(8)
+
         self.container.setStyleSheet(f"""
             QFrame {{
-                background-color: {background_color};
-                border: 1px solid {border_color};
+                background-color: {bg};
+                border: 1px solid {border};
                 border-radius: 16px;
                 margin: 1px;
             }}
         """)
-        if self.is_selected:
-            self._animate_shadow(20)
-        elif self.is_hovered:
-            self._animate_shadow(14)
-        else:
-            self._animate_shadow(8)
+
+        self.avatar_container.setStyleSheet(f"""
+            QFrame {{
+                background-color: {avatar_bg};
+                border-radius: 14px;
+                border: none;
+            }}
+        """)
+
+        # Labels stay white/primary on accent; secondary becomes primary when selected
+        text_color = current_theme.TEXT_PRIMARY
+        sub_color = current_theme.TEXT_PRIMARY if self.is_selected else current_theme.TEXT_SECONDARY
+
+        self.name_label.setStyleSheet(
+            f"color: {text_color}; background-color: transparent; border: none;"
+        )
+        self.steamid_label.setStyleSheet(
+            f"color: {sub_color}; background-color: transparent; border: none;"
+        )
+
         self.apply_action_styles()
 
     def apply_action_styles(self):
-        """Apply theme styling to action buttons"""
+        """Apply theme styling to action buttons (selected-state aware)."""
         current_theme = ThemeManager.get_current_theme()
 
-        self.edit_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {current_theme.SURFACE_HOVER};
-                border: 1px solid {current_theme.BORDER};
-                border-radius: 8px;
-                color: {current_theme.TEXT_PRIMARY};
-                font-size: 12px;
-                font-weight: 600;
-            }}
-            QPushButton:hover {{
-                background-color: {current_theme.ACCENT};
-                border-color: {current_theme.BORDER_FOCUS};
-            }}
-        """)
+        if self.is_selected:
+            # Semi-transparent overlays look clean on accent background
+            self.edit_button.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: rgba(255, 255, 255, 35);
+                    border: 1px solid rgba(255, 255, 255, 60);
+                    border-radius: 8px;
+                    color: {current_theme.TEXT_PRIMARY};
+                    font-size: 12px;
+                    font-weight: 600;
+                }}
+                QPushButton:hover {{
+                    background-color: rgba(255, 255, 255, 65);
+                }}
+            """)
+            self.remove_button.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: rgba(255, 80, 80, 35);
+                    border: 1px solid rgba(255, 80, 80, 70);
+                    border-radius: 8px;
+                    color: {current_theme.TEXT_PRIMARY};
+                    font-size: 12px;
+                    font-weight: 600;
+                }}
+                QPushButton:hover {{
+                    background-color: rgba(255, 80, 80, 75);
+                }}
+            """)
+        else:
+            self.edit_button.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {current_theme.SURFACE_HOVER};
+                    border: 1px solid {current_theme.BORDER};
+                    border-radius: 8px;
+                    color: {current_theme.TEXT_PRIMARY};
+                    font-size: 12px;
+                    font-weight: 600;
+                }}
+                QPushButton:hover {{
+                    background-color: {current_theme.ACCENT};
+                    border-color: {current_theme.BORDER_FOCUS};
+                }}
+            """)
+            self.remove_button.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: transparent;
+                    border: 1px solid {current_theme.BORDER};
+                    border-radius: 8px;
+                    color: {current_theme.TEXT_SECONDARY};
+                    font-size: 12px;
+                    font-weight: 600;
+                }}
+                QPushButton:hover {{
+                    background-color: {current_theme.ERROR};
+                    border-color: {current_theme.ERROR};
+                    color: {current_theme.TEXT_PRIMARY};
+                }}
+            """)
 
-        self.remove_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: transparent;
-                border: 1px solid {current_theme.BORDER};
-                border-radius: 8px;
-                color: {current_theme.TEXT_SECONDARY};
-                font-size: 12px;
-                font-weight: 600;
-            }}
-            QPushButton:hover {{
-                background-color: {current_theme.ACCENT_PRESSED};
-                border-color: {current_theme.BORDER_FOCUS};
-                color: {current_theme.TEXT_PRIMARY};
-            }}
-        """)
-    
+    # ── Avatar ────────────────────────────────────────────────────────────
+
     def load_avatar(self):
-        """Load avatar image from URL"""
-        # Try to load local avatar image if available
         if getattr(self.account, 'avatar_url', ''):
             try:
                 pixmap = QPixmap(self.account.avatar_url)
                 if not pixmap.isNull():
-                    scaled = pixmap.scaled(60, 60, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+                    scaled = pixmap.scaled(
+                        60, 60, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation
+                    )
                     self.avatar_label.setPixmap(scaled)
                     self.avatar_label.setText("")
                     return
             except Exception:
                 pass
-        # Fallback: first letter of account name
         if self.account.account_name:
             self.avatar_label.setText(self.account.account_name[0].upper())
 
     def update_account(self, account: AccountData):
-        """Update account data and refresh display"""
         self.account = account
-        self.name_label.setText(self.account.account_name)
-        self.steamid_label.setText(f"Steam ID: {self.account.steam_id}")
+        self.name_label.setText(account.account_name)
+        self.steamid_label.setText(f"Steam ID: {account.steam_id}")
         self.load_avatar()
+
+    # ── Shadow animation ──────────────────────────────────────────────────
 
     def _animate_shadow(self, blur_radius: int):
         self.shadow_anim.stop()

@@ -121,14 +121,14 @@ class ConfirmationItem(QWidget):
                 padding: 0px;
             }}
             QPushButton:hover {{
-                background-color: #7BA055;
+                background-color: {ThemeManager.get_current_theme().SUCCESS_HOVER};
             }}
             QPushButton:pressed {{
-                background-color: #6B8B47;
+                background-color: {ThemeManager.get_current_theme().SUCCESS_HOVER};
             }}
         """)
         buttons_layout.addWidget(self.accept_button)
-        
+
         # Decline button with icon
         self.decline_button = QPushButton()
         self.decline_button.setFixedSize(40, 40)
@@ -147,10 +147,10 @@ class ConfirmationItem(QWidget):
                 padding: 0px;
             }}
             QPushButton:hover {{
-                background-color: #C66661;
+                background-color: {ThemeManager.get_current_theme().ERROR_HOVER};
             }}
             QPushButton:pressed {{
-                background-color: #B85C57;
+                background-color: {ThemeManager.get_current_theme().ERROR_HOVER};
             }}
         """)
         buttons_layout.addWidget(self.decline_button)
@@ -220,13 +220,13 @@ class ConfirmationItem(QWidget):
                 padding: 0px;
             }}
             QPushButton:hover {{
-                background-color: #7BA055;
+                background-color: {current_theme.SUCCESS_HOVER};
             }}
             QPushButton:pressed {{
-                background-color: #6B8B47;
+                background-color: {current_theme.SUCCESS_HOVER};
             }}
         """)
-        
+
         decline_icon = current_theme.create_svg_icon(
             current_theme.get_decline_svg(),
             current_theme.TEXT_PRIMARY,
@@ -241,9 +241,9 @@ class ConfirmationItem(QWidget):
                 padding: 0px;
             }}
             QPushButton:hover {{
-                background-color: #C66661;
+                background-color: {current_theme.ERROR_HOVER};
             }}
             QPushButton:pressed {{
-                background-color: #B85C57;
+                background-color: {current_theme.ERROR_HOVER};
             }}
         """)
