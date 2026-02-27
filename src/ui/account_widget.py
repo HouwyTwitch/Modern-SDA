@@ -3,10 +3,13 @@ from PyQt5.QtWidgets import (
 )
 from src.theme import ThemeManager
 from PyQt5.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
-from PyQt5.QtGui import QFont, QPixmap, QColor
+from PyQt5.QtGui import QFont, QPixmap, QColor, QPainter, QPainterPath
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 
 from src.account_manager import AccountData
+
+_AVATAR_SIZE = 60
+_AVATAR_RADIUS = 7   # squircle corner radius (halved from 14)
 
 
 class AccountWidget(QFrame):
@@ -24,8 +27,9 @@ class AccountWidget(QFrame):
         self.setup_ui()
         self.load_avatar()
 
+    # ── Build UI ──────────────────────────────────────────────────────────
+
     def setup_ui(self):
-        """Setup the UI for the account widget"""
         self.setFixedHeight(96)
         self.setContentsMargins(0, 0, 0, 0)
 
@@ -37,14 +41,14 @@ class AccountWidget(QFrame):
             QFrame {{
                 background-color: {current_theme.SURFACE};
                 border: 1px solid {current_theme.BORDER};
-                border-radius: 16px;
+                border-radius: 8px;
                 margin: 1px;
             }}
         """)
 
         self.shadow_effect = QGraphicsDropShadowEffect(self.container)
         self.shadow_effect.setBlurRadius(10)
-        self.shadow_effect.setOffset(0, 6)
+        self.shadow_effect.setOffset(0, 4)
         self.shadow_effect.setColor(QColor(current_theme.SHADOW))
         self.container.setGraphicsEffect(self.shadow_effect)
 
@@ -60,38 +64,33 @@ class AccountWidget(QFrame):
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(14)
 
-        # Avatar container (stored as self so update_style can reach it)
+        # ── Avatar ─────────────────────────────────────────────────────────
         self.avatar_container = QFrame()
-        self.avatar_container.setFixedSize(60, 60)
+        self.avatar_container.setFixedSize(_AVATAR_SIZE, _AVATAR_SIZE)
         self.avatar_container.setStyleSheet(f"""
             QFrame {{
                 background-color: {current_theme.ACCENT};
-                border-radius: 14px;
+                border-radius: {_AVATAR_RADIUS}px;
                 border: none;
             }}
         """)
 
-        avatar_layout = QVBoxLayout(self.avatar_container)
-        avatar_layout.setContentsMargins(0, 0, 0, 0)
-        avatar_layout.setSpacing(0)
+        avatar_vbox = QVBoxLayout(self.avatar_container)
+        avatar_vbox.setContentsMargins(0, 0, 0, 0)
+        avatar_vbox.setSpacing(0)
 
         self.avatar_label = QLabel()
-        self.avatar_label.setStyleSheet("""
-            QLabel {
-                background-color: transparent;
-                color: white;
-                font-size: 24px;
-                font-weight: bold;
-                border: none;
-            }
-        """)
+        self.avatar_label.setStyleSheet(
+            "background-color: transparent; color: white; "
+            "font-size: 22px; font-weight: bold; border: none;"
+        )
         self.avatar_label.setAlignment(Qt.AlignCenter)
-        self.avatar_label.setFixedSize(60, 60)
-        avatar_layout.addWidget(self.avatar_label)
+        self.avatar_label.setFixedSize(_AVATAR_SIZE, _AVATAR_SIZE)
+        avatar_vbox.addWidget(self.avatar_label)
 
         layout.addWidget(self.avatar_container, 0, Qt.AlignVCenter)
 
-        # Account info
+        # ── Account info ───────────────────────────────────────────────────
         info_container = QFrame()
         info_container.setContentsMargins(0, 0, 0, 0)
         info_layout = QVBoxLayout(info_container)
@@ -99,44 +98,37 @@ class AccountWidget(QFrame):
         info_layout.setSpacing(4)
 
         self.name_label = QLabel(self.account.account_name)
-        self.name_label.setFont(QFont("Segoe UI", 15, QFont.Bold))
-        self.name_label.setStyleSheet(f"""
-            QLabel {{
-                color: {current_theme.TEXT_PRIMARY};
-                background-color: transparent;
-                border: none;
-            }}
-        """)
+        self.name_label.setFont(QFont("Segoe UI", 14, QFont.Bold))
+        self.name_label.setStyleSheet(
+            f"color: {current_theme.TEXT_PRIMARY}; background-color: transparent; border: none;"
+        )
         self.name_label.setWordWrap(False)
         info_layout.addWidget(self.name_label)
 
         self.steamid_label = QLabel(f"Steam ID: {self.account.steam_id}")
         self.steamid_label.setFont(QFont("Segoe UI", 11))
-        self.steamid_label.setStyleSheet(f"""
-            QLabel {{
-                color: {current_theme.TEXT_SECONDARY};
-                background-color: transparent;
-                border: none;
-            }}
-        """)
+        self.steamid_label.setStyleSheet(
+            f"color: {current_theme.TEXT_SECONDARY}; background-color: transparent; border: none;"
+        )
         self.steamid_label.setWordWrap(False)
         info_layout.addWidget(self.steamid_label)
 
         layout.addWidget(info_container, 1)
 
-        # Action buttons
+        # ── Action buttons  (28 px tall × 2 + 4 px gap = 60 px, fits fine) ─
         actions_container = QFrame()
+        actions_container.setFixedWidth(82)
         actions_layout = QVBoxLayout(actions_container)
         actions_layout.setContentsMargins(0, 0, 0, 0)
-        actions_layout.setSpacing(6)
+        actions_layout.setSpacing(4)
         actions_layout.setAlignment(Qt.AlignVCenter)
 
         self.edit_button = QPushButton("Edit")
-        self.edit_button.setFixedSize(80, 32)
+        self.edit_button.setFixedSize(82, 28)
         self.edit_button.clicked.connect(lambda: self.edit_requested.emit(self.account))
 
         self.remove_button = QPushButton("Remove")
-        self.remove_button.setFixedSize(80, 32)
+        self.remove_button.setFixedSize(82, 28)
         self.remove_button.clicked.connect(lambda: self.remove_requested.emit(self.account))
 
         actions_layout.addWidget(self.edit_button)
@@ -174,23 +166,18 @@ class AccountWidget(QFrame):
         self.update_style()
 
     def update_style(self):
-        """Update widget styling based on hover / selected state."""
         current_theme = ThemeManager.get_current_theme()
 
         if self.is_selected:
-            bg = current_theme.ACCENT
-            border = current_theme.ACCENT_HOVER
-            # Slightly lighter accent so avatar is distinguishable
+            bg, border = current_theme.ACCENT, current_theme.ACCENT_HOVER
             avatar_bg = current_theme.ACCENT_HOVER
             self._animate_shadow(20)
         elif self.is_hovered:
-            bg = current_theme.SURFACE_HOVER
-            border = current_theme.BORDER_FOCUS
+            bg, border = current_theme.SURFACE_HOVER, current_theme.BORDER_FOCUS
             avatar_bg = current_theme.ACCENT
             self._animate_shadow(14)
         else:
-            bg = current_theme.SURFACE
-            border = current_theme.BORDER
+            bg, border = current_theme.SURFACE, current_theme.BORDER
             avatar_bg = current_theme.ACCENT
             self._animate_shadow(8)
 
@@ -198,73 +185,60 @@ class AccountWidget(QFrame):
             QFrame {{
                 background-color: {bg};
                 border: 1px solid {border};
-                border-radius: 16px;
+                border-radius: 8px;
                 margin: 1px;
             }}
         """)
-
         self.avatar_container.setStyleSheet(f"""
             QFrame {{
                 background-color: {avatar_bg};
-                border-radius: 14px;
+                border-radius: {_AVATAR_RADIUS}px;
                 border: none;
             }}
         """)
 
-        # Labels stay white/primary on accent; secondary becomes primary when selected
         text_color = current_theme.TEXT_PRIMARY
         sub_color = current_theme.TEXT_PRIMARY if self.is_selected else current_theme.TEXT_SECONDARY
-
         self.name_label.setStyleSheet(
             f"color: {text_color}; background-color: transparent; border: none;"
         )
         self.steamid_label.setStyleSheet(
             f"color: {sub_color}; background-color: transparent; border: none;"
         )
-
         self.apply_action_styles()
 
     def apply_action_styles(self):
-        """Apply theme styling to action buttons (selected-state aware)."""
         current_theme = ThemeManager.get_current_theme()
 
         if self.is_selected:
-            # Semi-transparent overlays look clean on accent background
             self.edit_button.setStyleSheet(f"""
                 QPushButton {{
-                    background-color: rgba(255, 255, 255, 35);
-                    border: 1px solid rgba(255, 255, 255, 60);
-                    border-radius: 8px;
+                    background-color: rgba(255,255,255,35);
+                    border: 1px solid rgba(255,255,255,60);
+                    border-radius: 4px;
                     color: {current_theme.TEXT_PRIMARY};
-                    font-size: 12px;
-                    font-weight: 600;
+                    font-size: 11px; font-weight: 600;
                 }}
-                QPushButton:hover {{
-                    background-color: rgba(255, 255, 255, 65);
-                }}
+                QPushButton:hover {{ background-color: rgba(255,255,255,65); }}
             """)
             self.remove_button.setStyleSheet(f"""
                 QPushButton {{
-                    background-color: rgba(255, 80, 80, 35);
-                    border: 1px solid rgba(255, 80, 80, 70);
-                    border-radius: 8px;
+                    background-color: rgba(255,80,80,35);
+                    border: 1px solid rgba(255,80,80,70);
+                    border-radius: 4px;
                     color: {current_theme.TEXT_PRIMARY};
-                    font-size: 12px;
-                    font-weight: 600;
+                    font-size: 11px; font-weight: 600;
                 }}
-                QPushButton:hover {{
-                    background-color: rgba(255, 80, 80, 75);
-                }}
+                QPushButton:hover {{ background-color: rgba(255,80,80,75); }}
             """)
         else:
             self.edit_button.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {current_theme.SURFACE_HOVER};
                     border: 1px solid {current_theme.BORDER};
-                    border-radius: 8px;
+                    border-radius: 4px;
                     color: {current_theme.TEXT_PRIMARY};
-                    font-size: 12px;
-                    font-weight: 600;
+                    font-size: 11px; font-weight: 600;
                 }}
                 QPushButton:hover {{
                     background-color: {current_theme.ACCENT};
@@ -275,10 +249,9 @@ class AccountWidget(QFrame):
                 QPushButton {{
                     background-color: transparent;
                     border: 1px solid {current_theme.BORDER};
-                    border-radius: 8px;
+                    border-radius: 4px;
                     color: {current_theme.TEXT_SECONDARY};
-                    font-size: 12px;
-                    font-weight: 600;
+                    font-size: 11px; font-weight: 600;
                 }}
                 QPushButton:hover {{
                     background-color: {current_theme.ERROR};
@@ -289,15 +262,31 @@ class AccountWidget(QFrame):
 
     # ── Avatar ────────────────────────────────────────────────────────────
 
+    @staticmethod
+    def _clip_to_squircle(pixmap: QPixmap, size: int, radius: int) -> QPixmap:
+        """Return a copy of *pixmap* clipped to a rounded-rectangle mask."""
+        result = QPixmap(size, size)
+        result.fill(QColor(0, 0, 0, 0))
+        painter = QPainter(result)
+        painter.setRenderHint(QPainter.Antialiasing)
+        path = QPainterPath()
+        path.addRoundedRect(0, 0, size, size, radius, radius)
+        painter.setClipPath(path)
+        painter.drawPixmap(0, 0, pixmap)
+        painter.end()
+        return result
+
     def load_avatar(self):
         if getattr(self.account, 'avatar_url', ''):
             try:
                 pixmap = QPixmap(self.account.avatar_url)
                 if not pixmap.isNull():
                     scaled = pixmap.scaled(
-                        60, 60, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation
+                        _AVATAR_SIZE, _AVATAR_SIZE,
+                        Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation
                     )
-                    self.avatar_label.setPixmap(scaled)
+                    clipped = self._clip_to_squircle(scaled, _AVATAR_SIZE, _AVATAR_RADIUS)
+                    self.avatar_label.setPixmap(clipped)
                     self.avatar_label.setText("")
                     return
             except Exception:

@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QButtonGroup, QMessageBox, QDialog, QGraphicsOpacityEffect
 )
 from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QAbstractAnimation
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QPalette, QColor
 
 # Import account management classes
 from src.account_manager import AccountData, AccountManager, AuthenticationManager, ConfirmationManager
@@ -215,6 +215,18 @@ class SteamAuthenticatorGUI(QMainWindow):
         """Apply the current theme to the application"""
         current_theme = ThemeManager.get_current_theme()
         self.setStyleSheet(current_theme.get_stylesheet())
+
+        # Update the window palette so that widgets with background-color:transparent
+        # inherit the correct background colour (critical for Light / Solar themes).
+        palette = self.palette()
+        palette.setColor(QPalette.Window, QColor(current_theme.BACKGROUND))
+        palette.setColor(QPalette.WindowText, QColor(current_theme.TEXT_PRIMARY))
+        palette.setColor(QPalette.Base, QColor(current_theme.SURFACE_ELEVATED))
+        palette.setColor(QPalette.AlternateBase, QColor(current_theme.SURFACE))
+        palette.setColor(QPalette.Text, QColor(current_theme.TEXT_PRIMARY))
+        palette.setColor(QPalette.Button, QColor(current_theme.ACCENT))
+        palette.setColor(QPalette.ButtonText, QColor(current_theme.TEXT_PRIMARY))
+        self.setPalette(palette)
         
         # Update navigation buttons if they exist
         if hasattr(self, 'nav_buttons'):
