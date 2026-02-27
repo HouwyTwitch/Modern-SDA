@@ -1,4 +1,5 @@
 import asyncio
+import json as _json
 from datetime import datetime, timedelta
 from base64 import b64encode
 from time import time as time_time
@@ -251,10 +252,10 @@ class LoginMixin(SteamGuardMixin):
         # https://github.com/DoctorMcKay/node-steam-session/blob/64463d7468c1c860afb80164b8c5831e629f657f/src/enums-steam/EAuthTokenPlatformType.ts
         platform_data = {
             "website_id": "Community",
-            "device_details": {
-                "device_friendly_name": self.user_agent,
+            "device_details": _json.dumps({
+                "device_friendly_name": self.user_agent or "SteamDesktopAuthenticator",
                 "platform_type": 2,
-            },
+            }),
         }
 
         data = {

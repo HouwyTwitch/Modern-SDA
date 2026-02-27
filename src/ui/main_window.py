@@ -537,13 +537,7 @@ class SteamAuthenticatorGUI(QMainWindow):
     
     def on_login_completed(self, steam_id: str, success: bool):
         """Handle login completed signal"""
-        # Update UI based on login result
-        if success:
-            # Login successful
-            pass
-        else:
-            # Login failed
-            QMessageBox.warning(self, "Login Failed", "Failed to login to Steam account.")
+        pass
     
     def on_code_generated(self, steam_id: str, code: str):
         """Handle code generated signal"""
