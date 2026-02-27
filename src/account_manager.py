@@ -396,7 +396,7 @@ class AuthenticationManager(QObject):
             self.login_started.emit(str(account.steam_id))
             
             # Import aiosteampy client
-            from src.aiosteampy.client import SteamClient
+            from aiosteampy.client import SteamClient
             from aiohttp import ClientSession
             
             # Create session
@@ -494,7 +494,7 @@ class AuthenticationManager(QObject):
             else:
                 # Fallback to manual generation using the mafile
                 # Import aiosteampy utils
-                from src.aiosteampy.utils import gen_two_factor_code
+                from aiosteampy.utils import gen_two_factor_code
                 
                 # Parse mafile to get shared_secret
                 try:
@@ -672,21 +672,21 @@ class ConfirmationManager(QObject):
             try:
                 # Accept the confirmation using aiosteampy
                 # Create a simple confirmation object with the required attributes
-                from src.aiosteampy.models import Confirmation
-                from src.aiosteampy.constants import ConfirmationType
+                from aiosteampy.models import Confirmation
+                from aiosteampy.constants import ConfirmationType
                 
                 # Create a confirmation object with the cached data
                 conf_obj = Confirmation(
                     id=int(confirmation['id']),
                     nonce=confirmation['nonce'],
                     creator_id=int(confirmation['creator_id']),
-                    creation_time=None,  # Not needed for acceptance
-                    type=ConfirmationType.UNKNOWN,  # Not needed for acceptance
-                    icon="",  # Not needed for acceptance
-                    multi=False,  # Not needed for acceptance
-                    headline="",  # Not needed for acceptance
-                    summary="",  # Not needed for acceptance
-                    warn=None  # Not needed for acceptance
+                    creation_time=datetime.min,
+                    type=ConfirmationType.UNKNOWN,
+                    icon="",
+                    multi=False,
+                    headline="",
+                    summary="",
+                    warn=None
                 )
                 
                 # Accept the confirmation
@@ -733,21 +733,21 @@ class ConfirmationManager(QObject):
             try:
                 # Decline the confirmation using aiosteampy
                 # Create a simple confirmation object with the required attributes
-                from src.aiosteampy.models import Confirmation
-                from src.aiosteampy.constants import ConfirmationType
+                from aiosteampy.models import Confirmation
+                from aiosteampy.constants import ConfirmationType
                 
                 # Create a confirmation object with the cached data
                 conf_obj = Confirmation(
                     id=int(confirmation['id']),
                     nonce=confirmation['nonce'],
                     creator_id=int(confirmation['creator_id']),
-                    creation_time=None,  # Not needed for declination
-                    type=ConfirmationType.UNKNOWN,  # Not needed for declination
-                    icon="",  # Not needed for declination
-                    multi=False,  # Not needed for declination
-                    headline="",  # Not needed for declination
-                    summary="",  # Not needed for declination
-                    warn=None  # Not needed for declination
+                    creation_time=datetime.min,
+                    type=ConfirmationType.UNKNOWN,
+                    icon="",
+                    multi=False,
+                    headline="",
+                    summary="",
+                    warn=None
                 )
                 
                 # Decline the confirmation
