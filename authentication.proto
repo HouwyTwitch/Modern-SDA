@@ -42,6 +42,45 @@ message CAuthentication_BeginAuthSessionViaQR_Response {
   string challenge_url = 4;
 }
 
+// ==================== Credentials Auth ====================
+
+message CAuthentication_BeginAuthSessionViaCredentials_Request {
+  string account_name = 1;
+  string encrypted_password = 2;
+  uint64 encryption_timestamp = 3;
+  bool remember_login = 4;
+  ESessionPersistence persistence = 5;
+  string website_id = 6;
+  CAuthentication_DeviceDetails device_details = 7;
+  string guard_data = 8;
+}
+
+message CAuthentication_BeginAuthSessionViaCredentials_Response {
+  uint64 client_id = 1;
+  bytes request_id = 2;
+  float interval = 3;
+  uint64 steamid = 5;
+  string weak_token = 6;
+}
+
+// ==================== Poll Auth Session ====================
+
+message CAuthentication_PollAuthSessionStatus_Request {
+  uint64 client_id = 1;
+  bytes request_id = 2;
+  uint64 token_to_revoke = 3;
+}
+
+message CAuthentication_PollAuthSessionStatus_Response {
+  uint64 new_client_id = 1;
+  bytes new_request_id = 2;
+  string access_token = 3;
+  string refresh_token = 4;
+  string account_name = 5;
+  string new_guard_data = 6;
+  bool had_remote_interaction = 7;
+}
+
 // ==================== Mobile Confirmation ====================
 
 message CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request {
