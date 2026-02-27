@@ -47,11 +47,11 @@ class ConfirmationItem(QWidget):
             QFrame {{
                 background-color: {ThemeManager.get_current_theme().SURFACE};
                 border: 1px solid {ThemeManager.get_current_theme().BORDER};
-                border-radius: 12px;
+                border-radius: 6px;
                 margin: 1px;
             }}
         """)
-        
+
         # Layout for the main widget
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(2, 2, 2, 2)
@@ -117,7 +117,7 @@ class ConfirmationItem(QWidget):
             QPushButton {{
                 background-color: {ThemeManager.get_current_theme().SUCCESS};
                 border: none;
-                border-radius: 8px;
+                border-radius: 4px;
                 padding: 0px;
             }}
             QPushButton:hover {{
@@ -143,7 +143,7 @@ class ConfirmationItem(QWidget):
             QPushButton {{
                 background-color: {ThemeManager.get_current_theme().ERROR};
                 border: none;
-                border-radius: 8px;
+                border-radius: 4px;
                 padding: 0px;
             }}
             QPushButton:hover {{
@@ -183,7 +183,7 @@ class ConfirmationItem(QWidget):
             QFrame {{
                 background-color: {current_theme.SURFACE};
                 border: 1px solid {current_theme.BORDER};
-                border-radius: 12px;
+                border-radius: 6px;
                 margin: 1px;
             }}
         """)
@@ -216,7 +216,7 @@ class ConfirmationItem(QWidget):
             QPushButton {{
                 background-color: {current_theme.SUCCESS};
                 border: none;
-                border-radius: 8px;
+                border-radius: 4px;
                 padding: 0px;
             }}
             QPushButton:hover {{
@@ -237,7 +237,7 @@ class ConfirmationItem(QWidget):
             QPushButton {{
                 background-color: {current_theme.ERROR};
                 border: none;
-                border-radius: 8px;
+                border-radius: 4px;
                 padding: 0px;
             }}
             QPushButton:hover {{

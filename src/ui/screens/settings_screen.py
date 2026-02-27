@@ -70,7 +70,7 @@ class SettingsScreen(QWidget):
         settings_container.setStyleSheet(f"""
             QFrame {{
                 background-color: {ThemeManager.get_current_theme().SURFACE_ELEVATED};
-                border-radius: 12px;
+                border-radius: 6px;
                 margin: 0px;
             }}
         """)
@@ -178,7 +178,7 @@ class SettingsScreen(QWidget):
             self.settings_container.setStyleSheet(f"""
                 QFrame {{
                     background-color: {current_theme.SURFACE_ELEVATED};
-                    border-radius: 12px;
+                    border-radius: 6px;
                     margin: 0px;
                 }}
             """)
@@ -189,7 +189,7 @@ class SettingsScreen(QWidget):
                 QComboBox {{
                     background-color: {current_theme.SURFACE};
                     border: 2px solid {current_theme.BORDER};
-                    border-radius: 8px;
+                    border-radius: 4px;
                     padding: 8px 12px;
                     font-size: 14px;
                     color: {current_theme.TEXT_PRIMARY};
@@ -214,7 +214,7 @@ class SettingsScreen(QWidget):
                 QAbstractItemView {{
                     background-color: {current_theme.SURFACE};
                     border: 2px solid {current_theme.BORDER};
-                    border-radius: 8px;
+                    border-radius: 4px;
                     selection-background-color: {current_theme.ACCENT};
                     selection-color: {current_theme.TEXT_PRIMARY};
                     color: {current_theme.TEXT_PRIMARY};
@@ -270,7 +270,7 @@ class SettingsScreen(QWidget):
             QSpinBox {{
                 background-color: {current_theme.SURFACE};
                 border: 2px solid {current_theme.BORDER};
-                border-radius: 8px;
+                border-radius: 4px;
                 padding: 6px 10px;
                 color: {current_theme.TEXT_PRIMARY};
                 min-width: 90px;

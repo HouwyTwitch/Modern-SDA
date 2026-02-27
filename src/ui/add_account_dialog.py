@@ -145,7 +145,7 @@ class AddAccountDialog(QDialog):
             form_container.setStyleSheet(f"""
                 QFrame {{
                     background-color: {current_theme.SURFACE_ELEVATED};
-                    border-radius: 16px;
+                    border-radius: 8px;
                     border: 1px solid {current_theme.BORDER};
                 }}
             """)
@@ -166,7 +166,7 @@ class AddAccountDialog(QDialog):
             QLineEdit {{
                 background-color: {current_theme.SURFACE};
                 border: 2px solid {current_theme.BORDER};
-                border-radius: 12px;
+                border-radius: 6px;
                 padding: 12px 16px;
                 font-size: 14px;
                 color: {current_theme.TEXT_PRIMARY};
@@ -184,7 +184,7 @@ class AddAccountDialog(QDialog):
             QLineEdit {{
                 background-color: {current_theme.SURFACE};
                 border: 2px solid {current_theme.BORDER};
-                border-radius: 12px;
+                border-radius: 6px;
                 padding: 12px 16px;
                 font-size: 14px;
                 color: {current_theme.TEXT_PRIMARY};
@@ -203,7 +203,7 @@ class AddAccountDialog(QDialog):
             QPushButton {{
                 background-color: {current_theme.SURFACE_HOVER};
                 border: 2px solid {current_theme.BORDER};
-                border-radius: 12px;
+                border-radius: 6px;
                 font-size: 13px;
                 font-weight: 600;
                 color: {current_theme.TEXT_PRIMARY};
@@ -242,7 +242,7 @@ class AddAccountDialog(QDialog):
             QPushButton {{
                 background-color: {current_theme.SURFACE_ELEVATED};
                 border: 2px solid {current_theme.BORDER};
-                border-radius: 12px;
+                border-radius: 6px;
                 font-size: 14px;
                 font-weight: 600;
                 color: {current_theme.TEXT_SECONDARY};
@@ -260,7 +260,7 @@ class AddAccountDialog(QDialog):
             QPushButton {{
                 background-color: {current_theme.ACCENT};
                 border: none;
-                border-radius: 12px;
+                border-radius: 6px;
                 font-size: 14px;
                 font-weight: 600;
                 color: {current_theme.TEXT_PRIMARY};

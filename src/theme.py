@@ -99,7 +99,9 @@ class NoctuaTheme:
     
     @staticmethod
     def get_stylesheet():
-        theme = ThemeManager.get_current_theme() if 'ThemeManager' in globals() else NoctuaTheme
+        # Always use NoctuaTheme's own class attributes so that other themes
+        # can call this and then reliably str.replace() the Noctua colours.
+        theme = NoctuaTheme
         return f"""
         QMainWindow {{
             background-color: {theme.BACKGROUND};
@@ -116,7 +118,7 @@ class NoctuaTheme:
         QLineEdit {{
             background-color: {theme.SURFACE_ELEVATED};
             border: 1px solid {theme.BORDER};
-            border-radius: 12px;
+            border-radius: 6px;
             padding: 14px 18px;
             font-size: 14px;
             color: {theme.TEXT_PRIMARY};
@@ -127,45 +129,45 @@ class NoctuaTheme:
         QLineEdit:hover {{
             border-color: {theme.BORDER_FOCUS};
         }}
-        
+
         QLineEdit:focus {{
             border-color: {theme.BORDER_FOCUS};
             background-color: {theme.SURFACE_HOVER};
         }}
-        
+
         QLineEdit::placeholder {{
             color: {theme.TEXT_TERTIARY};
         }}
-        
+
         QPushButton {{
             background-color: {theme.ACCENT};
             border: none;
-            border-radius: 12px;
+            border-radius: 6px;
             padding: 14px 24px;
             font-size: 14px;
             font-weight: 600;
             color: {theme.TEXT_PRIMARY};
             min-height: 20px;
         }}
-        
+
         QPushButton:hover {{
             background-color: {theme.ACCENT_HOVER};
         }}
-        
+
         QPushButton:pressed {{
             background-color: {theme.ACCENT_PRESSED};
         }}
-        
+
         QDialog {{
             background-color: {theme.SURFACE};
             border: 1px solid {theme.BORDER};
-            border-radius: 12px;
+            border-radius: 6px;
         }}
 
         QComboBox {{
             background-color: {theme.SURFACE_ELEVATED};
             border: 1px solid {theme.BORDER};
-            border-radius: 10px;
+            border-radius: 5px;
             padding: 8px 12px;
             color: {theme.TEXT_PRIMARY};
         }}
@@ -183,46 +185,46 @@ class NoctuaTheme:
             image: none;
             border: none;
         }}
-        
+
         QFormLayout QLabel {{
             color: {theme.TEXT_SECONDARY};
             font-weight: 500;
             margin-bottom: 4px;
         }}
-        
+
         QScrollArea {{
             border: none;
             background-color: transparent;
         }}
-        
+
         QScrollArea > QWidget > QWidget {{
             background-color: transparent;
         }}
-        
+
         QScrollBar:vertical {{
             background-color: {theme.SURFACE};
             width: 8px;
-            border-radius: 4px;
+            border-radius: 2px;
             margin: 0;
         }}
-        
+
         QScrollBar::handle:vertical {{
             background-color: {theme.ACCENT};
-            border-radius: 4px;
+            border-radius: 2px;
             min-height: 20px;
             margin: 2px;
         }}
-        
+
         QScrollBar::handle:vertical:hover {{
             background-color: {theme.ACCENT_HOVER};
         }}
-        
+
         QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
             border: none;
             background: none;
             height: 0px;
         }}
-        
+
         QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
             background: none;
         }}
@@ -231,7 +233,7 @@ class NoctuaTheme:
             background-color: {theme.SURFACE_ELEVATED};
             color: {theme.TEXT_PRIMARY};
             border: 1px solid {theme.BORDER};
-            border-radius: 8px;
+            border-radius: 4px;
             padding: 6px 8px;
         }}
         """
