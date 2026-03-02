@@ -173,7 +173,7 @@ class AccountManager(QObject):
             
             # Create account data
             account = AccountData(
-                steam_id=steam_id,
+                steam_id=str(steam_id),
                 account_name=mafile_data['account_name'],
                 avatar_url="",  # Will be loaded later
                 mafile_path=mafile_path,
@@ -536,7 +536,7 @@ class AuthenticationManager(QObject):
         try:
             # Generate code using the client
             code = client.two_factor_code
-            self.code_generated.emit(steam_id, code)
+            self.code_generated.emit(str(steam_id), str(code))
         except Exception as e:
             print(f"Error generating periodic code: {e}")
             # Fallback to manual generation

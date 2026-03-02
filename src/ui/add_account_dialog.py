@@ -17,8 +17,9 @@ class AddAccountDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Add Steam Account")
-        self.setFixedSize(480, 380)
+        self.setFixedSize(480, 420)
         self.setModal(True)
+        self.setAttribute(Qt.WA_StyledBackground, True)
         self.mafile_path = ""
         self.setup_ui()
         self.apply_theme()
@@ -139,7 +140,8 @@ class AddAccountDialog(QDialog):
                 }}
             """)
         
-        # Form container styling
+        # Form container styling — children use transparent bg so the frame
+        # color shows through; QLabel and QLineEdit set their own colours below.
         form_container = self.findChild(QFrame)
         if form_container:
             form_container.setStyleSheet(f"""
@@ -147,6 +149,11 @@ class AddAccountDialog(QDialog):
                     background-color: {current_theme.SURFACE_ELEVATED};
                     border-radius: 8px;
                     border: 1px solid {current_theme.BORDER};
+                }}
+                QFrame QLabel {{
+                    background-color: transparent;
+                    border: none;
+                    color: {current_theme.TEXT_PRIMARY};
                 }}
             """)
         
