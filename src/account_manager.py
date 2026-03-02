@@ -394,67 +394,69 @@ class AuthenticationManager(QObject):
         """
         try:
             self.login_started.emit(str(account.steam_id))
-            
-            # Import aiosteampy client
+
             from aiosteampy.client import SteamClient
             from aiohttp import ClientSession
-            
-            # Create session
-            session = ClientSession(raise_for_status=True)
-            
-            # Parse mafile to get secrets
+
             with open(account.mafile_path, 'r', encoding='utf-8') as f:
                 mafile_data = json.load(f)
-            
+
             shared_secret = mafile_data.get('shared_secret', '')
             identity_secret = mafile_data.get('identity_secret', '')
-            
-            # Create Steam client
+            steam_id = int(str(account.steam_id) or 0)
+
+            # --- Try reusing stored tokens (no full login round-trip) ---
+            if account.refresh_token:
+                session = ClientSession(raise_for_status=True)
+                try:
+                    client = SteamClient(
+                        steam_id=steam_id,
+                        username=account.account_name,
+                        password=account.password,
+                        shared_secret=shared_secret,
+                        identity_secret=identity_secret,
+                        refresh_token=account.refresh_token,
+                        access_token=account.access_token or None,
+                        session=session,
+                    )
+                    if client.is_access_token_expired and not client.is_refresh_token_expired:
+                        await client.refresh_access_token()
+                    if not client.is_access_token_expired:
+                        self._steam_clients[str(account.steam_id)] = client
+                        account.update_session(client.access_token or '', client.refresh_token or '')
+                        self._authenticated_accounts[account.steam_id] = True
+                        self._start_code_timer(account.steam_id, client)
+                        self.login_completed.emit(str(account.steam_id), True)
+                        return {'success': True, 'message': 'Login successful', 'client': client}
+                except Exception:
+                    pass
+                finally:
+                    # Only close if we are NOT returning the client above
+                    if str(account.steam_id) not in self._steam_clients:
+                        await session.close()
+
+            # --- Full login: clean session, no pre-set tokens ---
+            # Passing old tokens to the client while also calling login() causes
+            # _finalize_login to fail (error 8 / nonce mismatch) because the old
+            # steamRefresh_steam cookie conflicts with the newly polled nonce.
+            session = ClientSession(raise_for_status=True)
             client = SteamClient(
-                steam_id=int(str(account.steam_id) or 0),
+                steam_id=steam_id,
                 username=account.account_name,
                 password=account.password,
                 shared_secret=shared_secret,
                 identity_secret=identity_secret,
-                access_token=account.access_token if account.access_token else None,
-                refresh_token=account.refresh_token if account.refresh_token else None,
-                session=session
+                session=session,
             )
-            
-            # Try to refresh session if we have tokens
-            if account.access_token or account.refresh_token:
-                try:
-                    # Check if access token is expired
-                    if client.is_access_token_expired and not client.is_refresh_token_expired:
-                        # Refresh the access token
-                        await client.refresh_access_token()
-                        self.session_refreshed.emit(str(account.steam_id), True)
-                    elif not client.is_access_token_expired:
-                        # Access token is still valid
-                        self.session_refreshed.emit(str(account.steam_id), True)
-                except Exception as e:
-                    # If refresh fails, we'll do a full login
-                    pass
-            
-            # If we still need to login (no valid tokens), do full login
-            if client.is_access_token_expired or not (account.access_token or account.refresh_token):
-                await client.login()
-            
-            # Store the client for future use
-            self._steam_clients[str(account.steam_id)] = client
-            
-            # Update account with new tokens
-            account.update_session(client.access_token or '', client.refresh_token or '')
+            await client.login()
 
-            # Mark as authenticated
+            self._steam_clients[str(account.steam_id)] = client
+            account.update_session(client.access_token or '', client.refresh_token or '')
             self._authenticated_accounts[account.steam_id] = True
-            
-            # Start code generation timer
             self._start_code_timer(account.steam_id, client)
-            
             self.login_completed.emit(str(account.steam_id), True)
             return {'success': True, 'message': 'Login successful', 'client': client}
-            
+
         except Exception as e:
             self.login_completed.emit(str(account.steam_id), False)
             return {'success': False, 'error': f'Login failed: {str(e)}'}
