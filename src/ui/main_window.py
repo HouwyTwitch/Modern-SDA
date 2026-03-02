@@ -337,8 +337,9 @@ class SteamAuthenticatorGUI(QMainWindow):
             
             # Add account through account manager
             result = self.account_manager.add_account(
-                account_data['mafile_path'], 
-                account_data['password']
+                account_data['mafile_path'],
+                account_data['password'],
+                proxy=account_data.get('proxy', ''),
             )
             
             if not result['success']:
@@ -393,17 +394,20 @@ class SteamAuthenticatorGUI(QMainWindow):
             mafile_path = account_data['mafile_path']
             password = account_data['password'] or None
 
+            proxy = account_data.get('proxy', '')
+
             if mafile_path == account.mafile_path:
                 mafile_path = None
 
-            if not mafile_path and not password:
+            if not mafile_path and not password and proxy == account.proxy:
                 QMessageBox.information(self, "No Changes", "No changes were provided.")
                 return
 
             result = self.account_manager.update_account(
                 account.steam_id,
                 mafile_path=mafile_path,
-                password=password
+                password=password,
+                proxy=proxy,
             )
 
             if not result['success']:

@@ -5,13 +5,9 @@ This module provides classes for managing Steam accounts and interfacing with ai
 
 import json
 import os
-import logging
-import traceback
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, asdict
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
-
-logger = logging.getLogger(__name__)
 from datetime import datetime
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -27,6 +23,7 @@ class AccountData:
     avatar_url: str = ""
     mafile_path: str = ""
     password: str = ""
+    proxy: str = ""  # http://user:pass@ip:port  (empty = no proxy)
     # Session data
     access_token: str = ""
     refresh_token: str = ""
@@ -46,6 +43,7 @@ class AccountData:
             avatar_url=data.get('avatar_url', ''),
             mafile_path=data.get('mafile_path', ''),
             password=data.get('password', ''),
+            proxy=data.get('proxy', ''),
             access_token=data.get('access_token', ''),
             refresh_token=data.get('refresh_token', ''),
             last_authenticated=data.get('last_authenticated')
@@ -153,7 +151,7 @@ class AccountManager(QObject):
         except Exception:
             pass
     
-    def add_account(self, mafile_path: str, password: str) -> Dict[str, Any]:
+    def add_account(self, mafile_path: str, password: str, proxy: str = "") -> Dict[str, Any]:
         """
         Add new account from mafile and password
         Returns: Dict with success status and account data or error message
@@ -181,7 +179,8 @@ class AccountManager(QObject):
                 account_name=mafile_data['account_name'],
                 avatar_url="",  # Will be loaded later
                 mafile_path=mafile_path,
-                password=password  # TODO: Encrypt in production
+                password=password,
+                proxy=proxy,
             )
             
             # Add to accounts list
@@ -219,7 +218,8 @@ class AccountManager(QObject):
         self,
         steam_id: str,
         mafile_path: Optional[str] = None,
-        password: Optional[str] = None
+        password: Optional[str] = None,
+        proxy: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Update account details such as mafile path or password."""
         try:
@@ -245,6 +245,9 @@ class AccountManager(QObject):
                 if not password_validation['valid']:
                     return {'success': False, 'error': password_validation['error']}
                 account.password = password
+
+            if proxy is not None:
+                account.proxy = proxy
 
             self.save_accounts()
             self.account_updated.emit(account)
@@ -392,17 +395,30 @@ class AuthenticationManager(QObject):
         self._ensure_loop()
         return asyncio.run_coroutine_threadsafe(coro, self._loop)
     
+    def _make_session(self, proxy: str):
+        """Create an aiohttp ClientSession, optionally routing through an HTTP proxy."""
+        from aiohttp import ClientSession
+
+        if not proxy:
+            return ClientSession(raise_for_status=True)
+
+        # Subclass that injects proxy= into every request so aiosteampy
+        # (which owns the session internally) uses the proxy transparently.
+        proxy_url = proxy
+
+        class _ProxiedSession(ClientSession):
+            async def _request(self, method, str_or_url, **kwargs):
+                kwargs.setdefault('proxy', proxy_url)
+                return await super()._request(method, str_or_url, **kwargs)
+
+        return _ProxiedSession(raise_for_status=True)
+
     async def login_account(self, account: AccountData) -> Dict[str, Any]:
-        """
-        Login to Steam account using aiosteampy
-        """
-        log = logger.getChild("login_account")
-        log.info("[%s] login_account called, username=%s", account.steam_id, account.account_name)
+        """Login to Steam account using aiosteampy"""
         try:
             self.login_started.emit(str(account.steam_id))
 
             from aiosteampy.client import SteamClient
-            from aiohttp import ClientSession
 
             with open(account.mafile_path, 'r', encoding='utf-8') as f:
                 mafile_data = json.load(f)
@@ -410,16 +426,10 @@ class AuthenticationManager(QObject):
             shared_secret = mafile_data.get('shared_secret', '')
             identity_secret = mafile_data.get('identity_secret', '')
             steam_id = int(str(account.steam_id) or 0)
-            log.debug("[%s] steam_id=%d  has_access_token=%s  has_refresh_token=%s",
-                      account.steam_id,
-                      steam_id,
-                      bool(account.access_token),
-                      bool(account.refresh_token))
 
             # --- Try reusing stored tokens (no full login round-trip) ---
             if account.refresh_token:
-                log.info("[%s] Attempting token reuse path", account.steam_id)
-                session = ClientSession(raise_for_status=True)
+                session = self._make_session(account.proxy)
                 try:
                     client = SteamClient(
                         steam_id=steam_id,
@@ -431,34 +441,23 @@ class AuthenticationManager(QObject):
                         access_token=account.access_token or None,
                         session=session,
                     )
-                    log.debug("[%s] Token reuse: is_access_token_expired=%s  is_refresh_token_expired=%s",
-                              account.steam_id,
-                              client.is_access_token_expired,
-                              client.is_refresh_token_expired)
                     if client.is_access_token_expired and not client.is_refresh_token_expired:
-                        log.info("[%s] Access token expired, refreshing via refresh_access_token()", account.steam_id)
                         await client.refresh_access_token()
-                        log.info("[%s] After refresh: is_access_token_expired=%s",
-                                 account.steam_id, client.is_access_token_expired)
                     if not client.is_access_token_expired:
-                        log.info("[%s] Token reuse succeeded", account.steam_id)
                         self._steam_clients[str(account.steam_id)] = client
                         account.update_session(client.access_token or '', client.refresh_token or '')
                         self._authenticated_accounts[account.steam_id] = True
                         self._start_code_timer(account.steam_id, client)
                         self.login_completed.emit(str(account.steam_id), True)
                         return {'success': True, 'message': 'Login successful', 'client': client}
-                    log.info("[%s] Token reuse failed (still expired), falling through to full login", account.steam_id)
                 except Exception:
-                    log.warning("[%s] Token reuse raised exception:\n%s",
-                                account.steam_id, traceback.format_exc())
+                    pass
                 finally:
                     if str(account.steam_id) not in self._steam_clients:
                         await session.close()
 
             # --- Full login: clean session, no pre-set tokens ---
-            log.info("[%s] Starting full login (clean session)", account.steam_id)
-            session = ClientSession(raise_for_status=True)
+            session = self._make_session(account.proxy)
             client = SteamClient(
                 steam_id=steam_id,
                 username=account.account_name,
@@ -467,9 +466,7 @@ class AuthenticationManager(QObject):
                 identity_secret=identity_secret,
                 session=session,
             )
-            log.debug("[%s] Calling client.login()", account.steam_id)
             await client.login()
-            log.info("[%s] client.login() succeeded", account.steam_id)
 
             self._steam_clients[str(account.steam_id)] = client
             account.update_session(client.access_token or '', client.refresh_token or '')
@@ -479,7 +476,6 @@ class AuthenticationManager(QObject):
             return {'success': True, 'message': 'Login successful', 'client': client}
 
         except Exception as e:
-            log.error("[%s] login_account FAILED:\n%s", account.steam_id, traceback.format_exc())
             self.login_completed.emit(str(account.steam_id), False)
             return {'success': False, 'error': f'Login failed: {str(e)}'}
     

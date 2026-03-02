@@ -17,7 +17,7 @@ class AddAccountDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Add Steam Account")
-        self.setFixedSize(480, 420)
+        self.setFixedSize(480, 500)
         self.setModal(True)
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.mafile_path = ""
@@ -95,7 +95,22 @@ class AddAccountDialog(QDialog):
         
         password_section.addLayout(toggle_layout)
         form_layout.addLayout(password_section)
-        
+
+        # Proxy section
+        proxy_section = QVBoxLayout()
+        proxy_section.setSpacing(8)
+
+        proxy_label = QLabel("Proxy (optional):")
+        proxy_label.setFont(QFont("Segoe UI", 13, QFont.Medium))
+        proxy_section.addWidget(proxy_label)
+
+        self.proxy_input = QLineEdit()
+        self.proxy_input.setPlaceholderText("http://user:pass@ip:port")
+        self.proxy_input.setMinimumHeight(48)
+        proxy_section.addWidget(self.proxy_input)
+
+        form_layout.addLayout(proxy_section)
+
         layout.addWidget(form_container)
         layout.addStretch()
         
@@ -159,7 +174,7 @@ class AddAccountDialog(QDialog):
         
         # Labels styling
         for label in self.findChildren(QLabel):
-            if label.text() in ["Mafile Location:", "Account Password:"]:
+            if label.text() in ["Mafile Location:", "Account Password:", "Proxy (optional):"]:
                 label.setStyleSheet(f"""
                     QLabel {{
                         color: {current_theme.TEXT_PRIMARY};
@@ -205,6 +220,24 @@ class AddAccountDialog(QDialog):
             }}
         """)
         
+        self.proxy_input.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {current_theme.SURFACE};
+                border: 2px solid {current_theme.BORDER};
+                border-radius: 6px;
+                padding: 12px 16px;
+                font-size: 14px;
+                color: {current_theme.TEXT_PRIMARY};
+            }}
+            QLineEdit:focus {{
+                border-color: {current_theme.BORDER_FOCUS};
+                background-color: {current_theme.SURFACE_HOVER};
+            }}
+            QLineEdit::placeholder {{
+                color: {current_theme.TEXT_TERTIARY};
+            }}
+        """)
+
         # Browse button styling
         self.browse_button.setStyleSheet(f"""
             QPushButton {{
@@ -310,5 +343,6 @@ class AddAccountDialog(QDialog):
         """Get the entered account data"""
         return {
             'mafile_path': self.mafile_path,
-            'password': self.password_input.text().strip()
+            'password': self.password_input.text().strip(),
+            'proxy': self.proxy_input.text().strip(),
         }
