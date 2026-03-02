@@ -240,26 +240,25 @@ class NoctuaTheme:
 
 
 class LightTheme:
-    """Light theme color palette"""
-    
-    # Colors
-    BACKGROUND = "#FFFFFF"        # White background
-    SURFACE = "#F5F5F5"          # Light gray surface
-    SURFACE_ELEVATED = "#EEEEEE"  # Elevated surface
-    SURFACE_HOVER = "#E0E0E0"     # Hover surface
-    ACCENT = "#2196F3"           # Blue accent
-    ACCENT_HOVER = "#1976D2"     # Darker blue for hover
-    ACCENT_PRESSED = "#0D47A1"   # Pressed state
-    TEXT_PRIMARY = "#212121"     # Dark gray
-    TEXT_SECONDARY = "#757575"   # Medium gray
-    TEXT_TERTIARY = "#BDBDBD"    # Light gray
-    BORDER = "#E0E0E0"          # Border color
-    BORDER_FOCUS = "#2196F3"    # Focused border
-    SUCCESS = "#4CAF50"         # Green
-    SUCCESS_HOVER = "#3D9142"   # Darker green
-    ERROR = "#F44336"           # Red
-    ERROR_HOVER = "#D32F2F"     # Darker red
-    SHADOW = "#000000"          # Shadow color
+    """Light theme color palette — soft blue-gray, easy on the eyes"""
+
+    BACKGROUND = "#F0F2F5"        # Soft blue-gray
+    SURFACE = "#E4E7EC"           # Slightly darker surface
+    SURFACE_ELEVATED = "#D8DCE4"  # Card / input surfaces
+    SURFACE_HOVER = "#CBD0DB"     # Hover state
+    ACCENT = "#3B82F6"            # Clear blue
+    ACCENT_HOVER = "#2563EB"      # Deeper blue
+    ACCENT_PRESSED = "#1D4ED8"    # Pressed
+    TEXT_PRIMARY = "#111827"      # Near-black
+    TEXT_SECONDARY = "#4B5563"    # Mid-gray
+    TEXT_TERTIARY = "#9CA3AF"     # Placeholder / muted
+    BORDER = "#C9CDD6"            # Subtle border
+    BORDER_FOCUS = "#3B82F6"      # Focus ring
+    SUCCESS = "#10B981"           # Green
+    SUCCESS_HOVER = "#059669"     # Darker green
+    ERROR = "#EF4444"             # Red
+    ERROR_HOVER = "#DC2626"       # Darker red
+    SHADOW = "#A0A9B8"            # Soft shadow
 
     @staticmethod
     def create_svg_icon(svg_content: str, color: str, size: int = 24):
@@ -462,25 +461,25 @@ class ForestTheme:
 
 
 class SolarTheme:
-    """Solar-inspired light palette"""
+    """Solar-inspired warm amber dark palette"""
 
-    BACKGROUND = "#FFF7E6"
-    SURFACE = "#FFEFD5"
-    SURFACE_ELEVATED = "#FFE3B3"
-    SURFACE_HOVER = "#FFD89C"
-    ACCENT = "#FF8C42"
-    ACCENT_HOVER = "#FF9F5A"
-    ACCENT_PRESSED = "#E6782F"
-    TEXT_PRIMARY = "#3A2A1B"
-    TEXT_SECONDARY = "#6B4E3D"
-    TEXT_TERTIARY = "#A07B65"
-    BORDER = "#F1C8A0"
-    BORDER_FOCUS = "#FF8C42"
-    SUCCESS = "#3CB371"
-    SUCCESS_HOVER = "#2E9960"
-    ERROR = "#E85D5D"
-    ERROR_HOVER = "#CC4A4A"
-    SHADOW = "#D2B48C"
+    BACKGROUND = "#1E1611"        # Deep warm brown
+    SURFACE = "#28201A"           # Warm surface
+    SURFACE_ELEVATED = "#342920"  # Card surfaces
+    SURFACE_HOVER = "#41342A"     # Hover state
+    ACCENT = "#E8903A"            # Warm amber
+    ACCENT_HOVER = "#F0A250"      # Brighter amber
+    ACCENT_PRESSED = "#C97826"    # Pressed amber
+    TEXT_PRIMARY = "#F5E6D0"      # Warm off-white
+    TEXT_SECONDARY = "#C4A07A"    # Warm mid-tone
+    TEXT_TERTIARY = "#8B6A4E"     # Muted warm brown
+    BORDER = "#4A3525"            # Warm border
+    BORDER_FOCUS = "#E8903A"      # Amber focus ring
+    SUCCESS = "#5DBB8A"           # Warm green
+    SUCCESS_HOVER = "#4DA070"     # Darker green
+    ERROR = "#E86060"             # Warm red
+    ERROR_HOVER = "#CC4A4A"       # Darker red
+    SHADOW = "#0D0A06"            # Deep shadow
 
     @staticmethod
     def create_svg_icon(svg_content: str, color: str, size: int = 24):
@@ -519,17 +518,17 @@ class SolarTheme:
 # Global theme manager
 class ThemeManager:
     """Manages application themes"""
-    
+
     themes = {
-        "Noctua": NoctuaTheme,
+        "Midnight": NoctuaTheme,  # renamed from "Noctua" to match its dark-blue coloring
         "Light": LightTheme,
         "Dark": DarkTheme,
         "Ocean": OceanTheme,
         "Forest": ForestTheme,
-        "Solar": SolarTheme
+        "Solar": SolarTheme,
     }
-    
-    current_theme = "Noctua"
+
+    current_theme = "Midnight"
     
     @classmethod
     def get_current_theme(cls):

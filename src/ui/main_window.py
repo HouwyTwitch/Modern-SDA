@@ -20,17 +20,25 @@ from src.ui.screens.accounts_screen import AccountsScreen
 from src.ui.screens.confirmations_screen import ConfirmationsScreen
 from src.ui.screens.settings_screen import SettingsScreen
 from src.ui.floating_add_button import FloatingAddButton
+from src.ui.title_bar import CustomTitleBar
 
 
 class SteamAuthenticatorGUI(QMainWindow):
     """Main application window with navigation"""
-    
+
     def __init__(self):
         super().__init__()
         SettingsManager.load_settings()
-        if not ThemeManager.set_theme(SettingsManager.get_setting("theme")):
-            ThemeManager.set_theme("Noctua")
-            SettingsManager.set_setting("theme", "Noctua")
+
+        # Migrate legacy "Noctua" setting to renamed "Midnight"
+        saved_theme = SettingsManager.get_setting("theme")
+        if saved_theme == "Noctua":
+            saved_theme = "Midnight"
+            SettingsManager.set_setting("theme", "Midnight")
+
+        if not ThemeManager.set_theme(saved_theme):
+            ThemeManager.set_theme("Midnight")
+            SettingsManager.set_setting("theme", "Midnight")
         # Initialize account management
         self.account_manager = AccountManager()
         self.auth_manager = AuthenticationManager()
@@ -68,23 +76,28 @@ class SteamAuthenticatorGUI(QMainWindow):
     def init_ui(self):
         """Initialize the user interface"""
         self.setWindowTitle("Steam Desktop Authenticator")
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setGeometry(100, 100, 480, 720)
         self.setMinimumSize(400, 600)
         self.apply_theme()
-        
+
         # Central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        
+
         # Main layout
         main_layout = QVBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
-        
+
+        # Custom title bar
+        self.title_bar = CustomTitleBar(self)
+        main_layout.addWidget(self.title_bar)
+
         # Content area with padding
         content_container = QWidget()
         content_layout = QVBoxLayout(content_container)
-        content_layout.setContentsMargins(24, 24, 24, 0)
+        content_layout.setContentsMargins(24, 16, 24, 0)
         
         # Stacked widget for different screens
         self.stacked_widget = QStackedWidget()
@@ -243,6 +256,10 @@ class SteamAuthenticatorGUI(QMainWindow):
                 }}
             """)
         
+        # Update title bar
+        if hasattr(self, 'title_bar'):
+            self.title_bar.apply_theme()
+
         # Update floating add button
         if hasattr(self, 'add_button'):
             self.add_button.apply_styling()

@@ -15,7 +15,7 @@ from .constants import (
     MarketListingStatus,
     TradeOfferStatus,
 )
-from .utils import create_ident_code, account_id_to_steam_id, make_inspect_url
+from .utils import create_ident_code, account_id_to_steam_id, make_inspect_url, stable_hash
 
 
 class ItemAction(NamedTuple):
@@ -124,7 +124,7 @@ class ItemDescription:
         return False
 
     def __hash__(self):
-        return hash(self.id)
+        return stable_hash(self.id)
 
 
 @dataclass(eq=False, slots=True, kw_only=True)
@@ -189,7 +189,7 @@ class EconItem:
         return False
 
     def __hash__(self):
-        return hash(self.id)
+        return stable_hash(self.id)
 
 
 # https://github.com/DoctorMcKay/node-steamcommunity/wiki/CConfirmation
@@ -256,7 +256,7 @@ class BaseOrder:
     price: int
 
     def __hash__(self):
-        return self.id
+        return stable_hash(self.id)
 
 
 @dataclass(eq=False, slots=True)
@@ -354,6 +354,21 @@ class MarketHistoryEvent:
     listing: MarketHistoryListing
     time_event: datetime
     type: MarketHistoryEventType
+
+
+    @property
+    def price(self) -> int:
+        if self.type == MarketHistoryEventType.LISTING_PURCHASED:
+            return self.listing.paid_amount + self.listing.paid_fee
+        elif self.type == MarketHistoryEventType.LISTING_SOLD:
+            return self.listing.received_amount
+
+    @property
+    def currency(self) -> Currency:
+        if self.type == MarketHistoryEventType.LISTING_PURCHASED:
+            return self.listing.currency
+        elif self.type == MarketHistoryEventType.LISTING_SOLD:
+            return self.listing.received_currency
 
 
 @dataclass(eq=False, slots=True)

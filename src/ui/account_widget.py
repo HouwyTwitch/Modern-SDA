@@ -116,10 +116,11 @@ class AccountWidget(QFrame):
         layout.addWidget(info_container, 1)
 
         # ── Action buttons (icon-only, side-by-side, shown on hover) ─────────
+        # Container always occupies its fixed width to prevent layout shift when
+        # buttons appear/disappear — only the buttons inside are shown/hidden.
         self.actions_container = QFrame()
         self.actions_container.setFixedWidth(80)
         self.actions_container.setStyleSheet("background-color: transparent; border: none;")
-        self.actions_container.setVisible(False)
         actions_layout = QHBoxLayout(self.actions_container)
         actions_layout.setContentsMargins(0, 0, 0, 0)
         actions_layout.setSpacing(6)
@@ -128,11 +129,13 @@ class AccountWidget(QFrame):
         self.edit_button = QPushButton("✎")
         self.edit_button.setFixedSize(34, 34)
         self.edit_button.setToolTip("Edit account")
+        self.edit_button.setVisible(False)
         self.edit_button.clicked.connect(lambda: self.edit_requested.emit(self.account))
 
         self.remove_button = QPushButton("✕")
         self.remove_button.setFixedSize(34, 34)
         self.remove_button.setToolTip("Remove account")
+        self.remove_button.setVisible(False)
         self.remove_button.clicked.connect(lambda: self.remove_requested.emit(self.account))
 
         actions_layout.addWidget(self.edit_button)
@@ -149,14 +152,16 @@ class AccountWidget(QFrame):
 
     def enterEvent(self, event):
         self.is_hovered = True
-        self.actions_container.setVisible(True)
+        self.edit_button.setVisible(True)
+        self.remove_button.setVisible(True)
         self.update_style()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
         self.is_hovered = False
         if not self.is_selected:
-            self.actions_container.setVisible(False)
+            self.edit_button.setVisible(False)
+            self.remove_button.setVisible(False)
         self.update_style()
         super().leaveEvent(event)
 
@@ -169,7 +174,9 @@ class AccountWidget(QFrame):
 
     def set_selected(self, selected: bool):
         self.is_selected = selected
-        self.actions_container.setVisible(selected or self.is_hovered)
+        visible = selected or self.is_hovered
+        self.edit_button.setVisible(visible)
+        self.remove_button.setVisible(visible)
         self.update_style()
 
     def update_style(self):

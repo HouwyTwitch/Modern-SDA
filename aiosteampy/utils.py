@@ -32,6 +32,7 @@ __all__ = (
     "remove_cookie_from_session",
     "async_throttle",
     "create_ident_code",
+    "stable_hash",
     "account_id_to_steam_id",
     "steam_id_to_account_id",
     "id64_to_id32",
@@ -232,6 +233,12 @@ def create_ident_code(*args, sep=":"):
     """
 
     return sep.join(reversed(list(str(i) for i in filter(lambda i: i is not None, args))))
+
+def stable_hash(s: str) -> int:
+    h = 0
+    for c in s:
+        h = (h * 131 + ord(c)) & 0xFFFFFFFFFFFFFFFF
+    return h
 
 
 def steam_id_to_account_id(steam_id: int) -> int:

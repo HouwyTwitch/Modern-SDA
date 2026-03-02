@@ -1,4 +1,9 @@
 import sys
+import os
+
+# Prefer vendored aiosteampy (bundled in project) over system installation
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from PyQt5.QtWidgets import QApplication
 
 # Import the main application window

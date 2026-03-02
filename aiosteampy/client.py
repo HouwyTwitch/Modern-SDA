@@ -2,6 +2,7 @@ from re import search as re_search
 from json import loads
 from typing import AsyncIterator, overload, Callable, final, TYPE_CHECKING
 
+from decimal import Decimal
 from aiohttp import ClientSession
 from aiohttp.client import _RequestContextManager
 
@@ -17,7 +18,7 @@ from .mixins.trade import TradeMixin
 from .mixins.market import MarketMixin
 
 
-DEF_COUNTRY = "UA"
+DEF_COUNTRY = "RU"
 DEF_TZ_OFFSET = "10800,0"
 
 
@@ -247,7 +248,6 @@ class SteamClientBase(SteamPublicClientBase, ProfileMixin, MarketMixin, TradeMix
             If not passed, api key will not be fetched and registered.
         :param force: force to reload all data even if it presented on client
         """
-
         if (not self._api_key or force) and api_key_domain:
             await self.get_api_key()
             not self._api_key and await self.register_new_api_key(api_key_domain)
@@ -261,16 +261,19 @@ class SteamClientBase(SteamPublicClientBase, ProfileMixin, MarketMixin, TradeMix
             self.country = wallet_info["wallet_country"]
             self.currency = Currency(wallet_info["wallet_currency"])
 
-        # avoid unnecessary privacy editing
+            return wallet_info
+
+
+    async def edit_profile_settings(self) -> WalletInfo:
+
         profile_data = await self.get_profile_data()
         if (
-            profile_data["Privacy"]["PrivacySettings"]["PrivacyInventory"] != 3
-            or profile_data["Privacy"]["PrivacySettings"]["PrivacyInventoryGifts"] != 3
-            or profile_data["Privacy"]["PrivacySettings"]["PrivacyProfile"] != 3
+                profile_data["Privacy"]["PrivacySettings"]["PrivacyInventory"] != 3
+                or profile_data["Privacy"]["PrivacySettings"]["PrivacyInventoryGifts"] != 3
+                or profile_data["Privacy"]["PrivacySettings"]["PrivacyProfile"] != 3
         ):
             await self.edit_privacy_settings(inventory=3, inventory_gifts=True, profile=3)
 
-        await self.trade_acknowledge()
 
     async def get_wallet_info(self) -> WalletInfo:
         """
@@ -291,18 +294,21 @@ class SteamClientBase(SteamPublicClientBase, ProfileMixin, MarketMixin, TradeMix
 
         return info
 
-    async def get_wallet_balance(self) -> int:
+    async def get_wallet_balance(self, convert_to_decimal: bool = False, wallet_info: dict | None = None) -> tuple:
         """
-        Fetch wallet info from inventory page, parse and return balance.
+        Fetch wallet info from inventory page, parse and return tuple of balance and delayed_balance.
 
         .. note:: May reset new items notifications count.
 
+        :param convert_to_decimal:
         :return: wallet balance as integer
         :raises EResultError: for ordinary reasons
         """
+        info = wallet_info or await self.get_wallet_info()
+        if convert_to_decimal:
+            return Decimal(info['wallet_balance']), Decimal(info['wallet_delayed_balance'])
 
-        info = await self.get_wallet_info()
-        return int(info["wallet_balance"])
+        return int(info['wallet_balance']), int(info['wallet_delayed_balance'])
 
     async def get_fund_wallet_info(self) -> FundWalletInfo:
         """
@@ -343,7 +349,6 @@ class SteamClientBase(SteamPublicClientBase, ProfileMixin, MarketMixin, TradeMix
         *,
         last_assetid: int = None,
         count=INV_COUNT,
-        start_assetid: int = None,
         params: T_PARAMS = {},
         headers: T_HEADERS = {},
         _item_descriptions_map: T_SHARED_DESCRIPTIONS = None,
@@ -351,12 +356,13 @@ class SteamClientBase(SteamPublicClientBase, ProfileMixin, MarketMixin, TradeMix
         """
         Fetches self inventory.
 
-        .. note:: You can paginate by yourself passing `start_assetid` arg
+        .. note::
+            * You can paginate by yourself passing `last_assetid` arg
+            * `count` arg value that less than 2000 lead to responses with strange amount of assets
 
         :param app_context: `Steam` app+context
         :param last_assetid:
         :param count: page size
-        :param start_assetid: start_assetid for partial inv fetch
         :param params: extra params to pass to url
         :param headers: extra headers to send with request
         :return: list of `EconItem`, total count of items in inventory, last asset id of the list
@@ -371,7 +377,6 @@ class SteamClientBase(SteamPublicClientBase, ProfileMixin, MarketMixin, TradeMix
                 app_context,
                 last_assetid=last_assetid,
                 count=count,
-                start_assetid=start_assetid,
                 params=params,
                 headers=headers,
                 _item_descriptions_map=_item_descriptions_map,
@@ -388,7 +393,6 @@ class SteamClientBase(SteamPublicClientBase, ProfileMixin, MarketMixin, TradeMix
         *,
         last_assetid: int = None,
         count=INV_COUNT,
-        start_assetid: int = None,
         params: T_PARAMS = {},
         headers: T_HEADERS = {},
         _item_descriptions_map: T_SHARED_DESCRIPTIONS = None,
@@ -396,10 +400,11 @@ class SteamClientBase(SteamPublicClientBase, ProfileMixin, MarketMixin, TradeMix
         """
         Fetches self inventory. Return async iterator to paginate over inventory pages.
 
+        .. note:: `count` arg value that less than 2000 lead to responses with strange amount of assets
+
         :param app_context: `Steam` app+context
         :param last_assetid:
         :param count: page size
-        :param start_assetid: start_assetid for partial inv fetch
         :param params: extra params to pass to url
         :param headers: extra headers to send with request
         :return: `AsyncIterator` that yields list of `EconItem`, total count of items in inventory, last asset id of the list
@@ -413,7 +418,6 @@ class SteamClientBase(SteamPublicClientBase, ProfileMixin, MarketMixin, TradeMix
             app_context,
             last_assetid=last_assetid,
             count=count,
-            start_assetid=start_assetid,
             params=params,
             headers=headers,
             _item_descriptions_map=_item_descriptions_map,

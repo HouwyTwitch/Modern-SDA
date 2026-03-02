@@ -11,7 +11,7 @@ class SettingsManager:
     _settings_path = os.path.join(os.path.expanduser("~"), ".sda_settings.json")
 
     DEFAULTS: Dict[str, Any] = {
-        "theme": "Noctua",
+        "theme": "Midnight",
         "auto_refresh_enabled": True,
         "auto_refresh_interval_seconds": 1,
         "copy_code_on_click": True,
