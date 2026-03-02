@@ -455,16 +455,17 @@ class SteamAuthenticatorGUI(QMainWindow):
         needs_auth = selected_account.needs_reauthentication()
         has_client = str(selected_account.steam_id) in self.auth_manager._steam_clients
         if needs_auth or not has_client:
-            # Start authentication in background
+            # Start authentication in background.
+            # _on_login_worker_finished will notify confirmations_screen once done,
+            # so do NOT call it here — that would fire a second concurrent login.
             self.authenticate_account(selected_account)
         else:
             # Generate a code immediately
             code = self.auth_manager.generate_auth_code(selected_account)
             self.accounts_screen.title_label.setText(code)
-        
-        # Notify confirmations screen about account selection
-        if hasattr(self, 'confirmations_screen'):
-            self.confirmations_screen.on_account_selected(selected_account)
+            # Only notify confirmations screen when we already have a valid session
+            if hasattr(self, 'confirmations_screen'):
+                self.confirmations_screen.on_account_selected(selected_account)
     
     def authenticate_account(self, account: AccountData):
         """Authenticate account using aiosteampy"""
