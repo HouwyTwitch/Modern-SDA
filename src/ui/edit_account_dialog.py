@@ -101,7 +101,7 @@ class EditAccountDialog(QDialog):
         self.proxy_input = QLineEdit()
         self.proxy_input.setPlaceholderText("http://user:pass@ip:port")
         self.proxy_input.setMinimumHeight(48)
-        self.proxy_input.setText(account.proxy)
+        self.proxy_input.setText(self.account.proxy)
         proxy_section.addWidget(self.proxy_input)
 
         form_layout.addLayout(proxy_section)
