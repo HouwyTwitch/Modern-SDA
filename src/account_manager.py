@@ -543,7 +543,7 @@ class AuthenticationManager(QObject):
             # We need to get the account data to generate the code manually
             # In a real implementation, we would have access to the account manager
             # For now, emit a default code
-            self.code_generated.emit(steam_id, "00000")
+            self.code_generated.emit(str(steam_id), "00000")
 
 
 class ConfirmationManager(QObject):
