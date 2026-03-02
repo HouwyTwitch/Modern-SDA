@@ -5,9 +5,13 @@ This module provides classes for managing Steam accounts and interfacing with ai
 
 import json
 import os
+import logging
+import traceback
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, asdict
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
+
+logger = logging.getLogger(__name__)
 from datetime import datetime
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -392,6 +396,8 @@ class AuthenticationManager(QObject):
         """
         Login to Steam account using aiosteampy
         """
+        log = logger.getChild("login_account")
+        log.info("[%s] login_account called, username=%s", account.steam_id, account.account_name)
         try:
             self.login_started.emit(str(account.steam_id))
 
@@ -404,9 +410,15 @@ class AuthenticationManager(QObject):
             shared_secret = mafile_data.get('shared_secret', '')
             identity_secret = mafile_data.get('identity_secret', '')
             steam_id = int(str(account.steam_id) or 0)
+            log.debug("[%s] steam_id=%d  has_access_token=%s  has_refresh_token=%s",
+                      account.steam_id,
+                      steam_id,
+                      bool(account.access_token),
+                      bool(account.refresh_token))
 
             # --- Try reusing stored tokens (no full login round-trip) ---
             if account.refresh_token:
+                log.info("[%s] Attempting token reuse path", account.steam_id)
                 session = ClientSession(raise_for_status=True)
                 try:
                     client = SteamClient(
@@ -419,26 +431,33 @@ class AuthenticationManager(QObject):
                         access_token=account.access_token or None,
                         session=session,
                     )
+                    log.debug("[%s] Token reuse: is_access_token_expired=%s  is_refresh_token_expired=%s",
+                              account.steam_id,
+                              client.is_access_token_expired,
+                              client.is_refresh_token_expired)
                     if client.is_access_token_expired and not client.is_refresh_token_expired:
+                        log.info("[%s] Access token expired, refreshing via refresh_access_token()", account.steam_id)
                         await client.refresh_access_token()
+                        log.info("[%s] After refresh: is_access_token_expired=%s",
+                                 account.steam_id, client.is_access_token_expired)
                     if not client.is_access_token_expired:
+                        log.info("[%s] Token reuse succeeded", account.steam_id)
                         self._steam_clients[str(account.steam_id)] = client
                         account.update_session(client.access_token or '', client.refresh_token or '')
                         self._authenticated_accounts[account.steam_id] = True
                         self._start_code_timer(account.steam_id, client)
                         self.login_completed.emit(str(account.steam_id), True)
                         return {'success': True, 'message': 'Login successful', 'client': client}
+                    log.info("[%s] Token reuse failed (still expired), falling through to full login", account.steam_id)
                 except Exception:
-                    pass
+                    log.warning("[%s] Token reuse raised exception:\n%s",
+                                account.steam_id, traceback.format_exc())
                 finally:
-                    # Only close if we are NOT returning the client above
                     if str(account.steam_id) not in self._steam_clients:
                         await session.close()
 
             # --- Full login: clean session, no pre-set tokens ---
-            # Passing old tokens to the client while also calling login() causes
-            # _finalize_login to fail (error 8 / nonce mismatch) because the old
-            # steamRefresh_steam cookie conflicts with the newly polled nonce.
+            log.info("[%s] Starting full login (clean session)", account.steam_id)
             session = ClientSession(raise_for_status=True)
             client = SteamClient(
                 steam_id=steam_id,
@@ -448,7 +467,9 @@ class AuthenticationManager(QObject):
                 identity_secret=identity_secret,
                 session=session,
             )
+            log.debug("[%s] Calling client.login()", account.steam_id)
             await client.login()
+            log.info("[%s] client.login() succeeded", account.steam_id)
 
             self._steam_clients[str(account.steam_id)] = client
             account.update_session(client.access_token or '', client.refresh_token or '')
@@ -458,6 +479,7 @@ class AuthenticationManager(QObject):
             return {'success': True, 'message': 'Login successful', 'client': client}
 
         except Exception as e:
+            log.error("[%s] login_account FAILED:\n%s", account.steam_id, traceback.format_exc())
             self.login_completed.emit(str(account.steam_id), False)
             return {'success': False, 'error': f'Login failed: {str(e)}'}
     
