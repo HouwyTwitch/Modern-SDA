@@ -18,7 +18,7 @@ class EditAccountDialog(QDialog):
         super().__init__(parent)
         self.account = account
         self.setWindowTitle("Edit Steam Account")
-        self.setFixedSize(480, 390)
+        self.setFixedSize(480, 470)
         self.setModal(True)
         self.mafile_path = account.mafile_path
         self.setup_ui()
@@ -90,6 +90,22 @@ class EditAccountDialog(QDialog):
         password_section.addLayout(toggle_layout)
         form_layout.addLayout(password_section)
 
+        # Proxy section
+        proxy_section = QVBoxLayout()
+        proxy_section.setSpacing(8)
+
+        proxy_label = QLabel("Proxy (optional):")
+        proxy_label.setFont(QFont("Segoe UI", 13, QFont.Medium))
+        proxy_section.addWidget(proxy_label)
+
+        self.proxy_input = QLineEdit()
+        self.proxy_input.setPlaceholderText("http://user:pass@ip:port")
+        self.proxy_input.setMinimumHeight(48)
+        self.proxy_input.setText(account.proxy)
+        proxy_section.addWidget(self.proxy_input)
+
+        form_layout.addLayout(proxy_section)
+
         layout.addWidget(form_container)
         layout.addStretch()
 
@@ -140,7 +156,7 @@ class EditAccountDialog(QDialog):
             """)
 
         for label in self.findChildren(QLabel):
-            if label.text() in ["Mafile Location:", "Account Password:"]:
+            if label.text() in ["Mafile Location:", "Account Password:", "Proxy (optional):"]:
                 label.setStyleSheet(f"""
                     QLabel {{
                         color: {current_theme.TEXT_PRIMARY};
@@ -165,6 +181,24 @@ class EditAccountDialog(QDialog):
         """)
 
         self.password_input.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {current_theme.SURFACE};
+                border: 2px solid {current_theme.BORDER};
+                border-radius: 6px;
+                padding: 12px 16px;
+                font-size: 14px;
+                color: {current_theme.TEXT_PRIMARY};
+            }}
+            QLineEdit:focus {{
+                border-color: {current_theme.BORDER_FOCUS};
+                background-color: {current_theme.SURFACE_HOVER};
+            }}
+            QLineEdit::placeholder {{
+                color: {current_theme.TEXT_TERTIARY};
+            }}
+        """)
+
+        self.proxy_input.setStyleSheet(f"""
             QLineEdit {{
                 background-color: {current_theme.SURFACE};
                 border: 2px solid {current_theme.BORDER};
@@ -278,5 +312,6 @@ class EditAccountDialog(QDialog):
     def get_account_data(self) -> Dict[str, str]:
         return {
             'mafile_path': self.mafile_path,
-            'password': self.password_input.text().strip()
+            'password': self.password_input.text().strip(),
+            'proxy': self.proxy_input.text().strip(),
         }
