@@ -6,6 +6,8 @@ This module provides classes for managing Steam accounts and interfacing with ai
 import json
 import os
 import threading
+import urllib.request
+import xml.etree.ElementTree as ET
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, asdict
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
@@ -138,6 +140,7 @@ class AccountManager(QObject):
     account_removed = pyqtSignal(str)   # steam_id
     account_updated = pyqtSignal(object)  # AccountData
     accounts_loaded = pyqtSignal()
+    avatar_loaded = pyqtSignal(str, bytes)  # steam_id, image_bytes
     
     def __init__(self):
         super().__init__()
@@ -178,7 +181,8 @@ class AccountManager(QObject):
             self.accounts.append(account)
             self.save_accounts()
             self.account_added.emit(account)
-            
+            threading.Thread(target=self._fetch_avatar_async, args=(account,), daemon=True).start()
+
             return {'success': True, 'account': account}
             
         except Exception as e:
@@ -251,7 +255,25 @@ class AccountManager(QObject):
     def get_all_accounts(self) -> List[AccountData]:
         """Get all accounts"""
         return self.accounts.copy()
-    
+
+    def _fetch_avatar_async(self, account: AccountData):
+        """Fetch avatar image in one thread: resolve URL from XML if needed, then download bytes."""
+        try:
+            if not account.avatar_url:
+                xml_url = f"https://steamcommunity.com/profiles/{account.steam_id}/?xml=1"
+                with urllib.request.urlopen(xml_url, timeout=10) as r:
+                    root = ET.fromstring(r.read())
+                avatar_url = root.findtext('avatarFull') or root.findtext('avatarMedium') or ''
+                if not avatar_url:
+                    return
+                account.avatar_url = avatar_url
+
+            with urllib.request.urlopen(account.avatar_url, timeout=10) as r:
+                data = r.read()
+            self.avatar_loaded.emit(account.steam_id, data)
+        except Exception:
+            pass
+
     def save_accounts(self) -> bool:
         """Save accounts to file"""
         try:
@@ -274,6 +296,8 @@ class AccountManager(QObject):
             
             self.accounts = [AccountData.from_dict(data) for data in accounts_data]
             self.accounts_loaded.emit()
+            for account in self.accounts:
+                threading.Thread(target=self._fetch_avatar_async, args=(account,), daemon=True).start()
             return True
             
         except Exception as e:

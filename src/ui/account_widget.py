@@ -1,10 +1,9 @@
 from PyQt5.QtWidgets import (
-    QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+    QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QGraphicsDropShadowEffect
 )
-from src.theme import ThemeManager
 from PyQt5.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
-from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtWidgets import QGraphicsDropShadowEffect
+from PyQt5.QtGui import QFont, QColor, QPixmap, QPainter, QPainterPath
+from src.theme import ThemeManager
 
 from src.account_manager import AccountData
 
@@ -276,14 +275,44 @@ class AccountWidget(QFrame):
     # ── Avatar ────────────────────────────────────────────────────────────
 
     def load_avatar(self):
+        """Show initial letter; a real avatar arrives later via set_avatar()."""
+        current = self.avatar_label.pixmap()
+        if current and not current.isNull():
+            return  # already displaying an avatar — keep it
         if self.account.account_name:
+            self.avatar_label.setPixmap(QPixmap())
             self.avatar_label.setText(self.account.account_name[0].upper())
+
+    def set_avatar(self, data: bytes):
+        """Decode image bytes and display as a rounded avatar (called from main_window)."""
+        pixmap = QPixmap()
+        pixmap.loadFromData(data)
+        if not pixmap.isNull():
+            pixmap = self._clip_to_squircle(
+                pixmap.scaled(_AVATAR_SIZE, _AVATAR_SIZE, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+            )
+            self.avatar_label.setPixmap(pixmap)
+            self.avatar_label.setText("")
+        # If decode failed, the initials fallback from load_avatar() stays visible
+
+    @staticmethod
+    def _clip_to_squircle(pixmap: QPixmap) -> QPixmap:
+        size = pixmap.size()
+        result = QPixmap(size)
+        result.fill(Qt.transparent)
+        painter = QPainter(result)
+        painter.setRenderHint(QPainter.Antialiasing)
+        path = QPainterPath()
+        path.addRoundedRect(0, 0, size.width(), size.height(), _AVATAR_RADIUS, _AVATAR_RADIUS)
+        painter.setClipPath(path)
+        painter.drawPixmap(0, 0, pixmap)
+        painter.end()
+        return result
 
     def update_account(self, account: AccountData):
         self.account = account
         self.name_label.setText(account.account_name)
         self.steamid_label.setText(f"Steam ID: {account.steam_id}")
-        self.load_avatar()
 
     # ── Shadow animation ──────────────────────────────────────────────────
 
