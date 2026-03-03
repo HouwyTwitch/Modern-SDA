@@ -3,7 +3,7 @@ import asyncio
 from typing import List, Dict, Optional
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QStackedWidget,
-    QButtonGroup, QMessageBox, QDialog, QGraphicsOpacityEffect
+    QButtonGroup, QDialog, QGraphicsOpacityEffect
 )
 from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QAbstractAnimation
 from PyQt5.QtGui import QFont, QPalette, QColor
@@ -21,6 +21,7 @@ from src.ui.screens.confirmations_screen import ConfirmationsScreen
 from src.ui.screens.settings_screen import SettingsScreen
 from src.ui.floating_add_button import FloatingAddButton
 from src.ui.title_bar import CustomTitleBar
+from src.ui.message_dialog import MessageDialog
 
 
 class SteamAuthenticatorGUI(QMainWindow):
@@ -320,52 +321,34 @@ class SteamAuthenticatorGUI(QMainWindow):
             
             # Validation
             if not account_data['mafile_path']:
-                QMessageBox.warning(
-                    self, 
-                    "Invalid Input", 
-                    "Please select a mafile."
-                )
+                MessageDialog.warning(self, "Invalid Input", "Please select a mafile.")
                 return
-            
+
             if not account_data['password']:
-                QMessageBox.warning(
-                    self, 
-                    "Invalid Input", 
-                    "Please enter account password."
-                )
+                MessageDialog.warning(self, "Invalid Input", "Please enter account password.")
                 return
-            
+
             # Add account through account manager
             result = self.account_manager.add_account(
                 account_data['mafile_path'],
                 account_data['password'],
                 proxy=account_data.get('proxy', ''),
             )
-            
+
             if not result['success']:
-                QMessageBox.warning(
-                    self,
-                    "Account Addition Failed",
-                    result['error']
-                )
+                MessageDialog.warning(self, "Account Addition Failed", result['error'])
                 return
-            
-            # Show success message
-            QMessageBox.information(
+
+            MessageDialog.information(
                 self,
                 "Account Added",
                 f"Successfully added account '{result['account'].account_name}' from mafile."
             )
 
     def on_accounts_loaded(self):
-        """Handle accounts loaded signal"""
-        # Load all accounts into UI
-        # Check if accounts screen is ready
         if hasattr(self, 'accounts_screen') and self.accounts_screen is not None:
             for account in self.account_manager.get_all_accounts():
                 self.on_account_added(account)
-        else:
-            pass
     
     def on_account_added(self, account: AccountData):
         """Handle account added signal"""
@@ -400,7 +383,7 @@ class SteamAuthenticatorGUI(QMainWindow):
                 mafile_path = None
 
             if not mafile_path and not password and proxy == account.proxy:
-                QMessageBox.information(self, "No Changes", "No changes were provided.")
+                MessageDialog.information(self, "No Changes", "No changes were provided.")
                 return
 
             result = self.account_manager.update_account(
@@ -411,9 +394,9 @@ class SteamAuthenticatorGUI(QMainWindow):
             )
 
             if not result['success']:
-                QMessageBox.warning(self, "Update Failed", result['error'])
+                MessageDialog.warning(self, "Update Failed", result['error'])
             else:
-                QMessageBox.information(
+                MessageDialog.information(
                     self,
                     "Account Updated",
                     f"Successfully updated account '{result['account'].account_name}'."
@@ -421,16 +404,14 @@ class SteamAuthenticatorGUI(QMainWindow):
 
     def confirm_remove_account(self, account: AccountData):
         """Confirm and remove an account."""
-        result = QMessageBox.question(
+        confirmed = MessageDialog.question(
             self,
             "Remove Account",
             f"Remove account '{account.account_name}'?\nThis will remove it from this app only.",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
         )
-        if result == QMessageBox.Yes:
+        if confirmed:
             if not self.account_manager.remove_account(account.steam_id):
-                QMessageBox.warning(self, "Remove Failed", "Failed to remove account.")
+                MessageDialog.warning(self, "Remove Failed", "Failed to remove account.")
     
     def on_account_selected(self, selected_widget):
         """Handle account selection with automatic authentication"""
@@ -504,17 +485,17 @@ class SteamAuthenticatorGUI(QMainWindow):
             worker.start()
 
         except Exception as e:
-            QMessageBox.warning(self, "Authentication Failed", f"Failed to authenticate account: {str(e)}")
+            MessageDialog.warning(self, "Authentication Failed", f"Failed to authenticate account: {str(e)}")
 
     def _on_login_worker_finished(self, worker, account: AccountData):
         """Handle completion of background login"""
         try:
             if worker.error:
-                QMessageBox.warning(self, "Login Failed", f"Failed to login: {worker.error}")
+                MessageDialog.warning(self, "Login Failed", f"Failed to login: {worker.error}")
                 return
             result = worker.result or {}
             if not result.get('success'):
-                QMessageBox.warning(self, "Login Failed", result.get('error', 'Unknown error'))
+                MessageDialog.warning(self, "Login Failed", result.get('error', 'Unknown error'))
                 return
 
             # Save updated account tokens
@@ -528,7 +509,7 @@ class SteamAuthenticatorGUI(QMainWindow):
             if hasattr(self, 'confirmations_screen') and self.selected_account and self.selected_account.steam_id == account.steam_id:
                 self.confirmations_screen.on_account_selected(account)
         except Exception as e:
-            QMessageBox.warning(self, "Login Handling Error", f"Failed after login: {str(e)}")
+            MessageDialog.warning(self, "Login Handling Error", f"Failed after login: {str(e)}")
     
     def on_account_removed(self, steam_id: str):
         """Handle account removed signal"""
@@ -569,18 +550,10 @@ class SteamAuthenticatorGUI(QMainWindow):
             self.accounts_screen.title_label.setText(code)
     
     def on_session_refreshed(self, steam_id: str, success: bool):
-        if success:
-            # Session refreshed successfully
-            pass
-        else:
-            # Session refreshed successfully
-            pass
         pass
-    
+
     def on_confirmations_loaded(self, steam_id: str, confirmations: list):
-        """Handle confirmations loaded signal"""
-        # Let the confirmations screen own rendering to avoid duplicates
-        return
+        pass
     
     def on_confirmation_processed(self, steam_id: str, confirmation_id: str, accepted: bool):
         """Handle confirmation processed signal"""
@@ -606,7 +579,6 @@ class SteamAuthenticatorGUI(QMainWindow):
             self.confirmations_screen.process_decline_confirmation(confirmation_id)
 
     def on_account_updated(self, account: AccountData):
-        """Handle account updated (e.g., avatar fetched)"""
         for widget in self.account_widgets:
             if widget.account.steam_id == account.steam_id:
                 widget.update_account(account)

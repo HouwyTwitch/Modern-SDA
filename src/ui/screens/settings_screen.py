@@ -1,23 +1,8 @@
-import sys
-import json
-import os
-from typing import List, Dict, Optional
-from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QLineEdit, QPushButton, QScrollArea, QFrame, QSizePolicy,
-    QSpacerItem, QMessageBox, QDialog, QFormLayout, QDialogButtonBox,
-    QStackedWidget, QButtonGroup, QComboBox, QFileDialog,
-    QAbstractItemView, QCheckBox, QSpinBox
-)
-from PyQt5.QtCore import Qt, pyqtSignal, QSize, QTimer, QByteArray
-from PyQt5.QtGui import QFont, QPixmap, QPainter, QBrush, QColor, QIcon
-from PyQt5.QtSvg import QSvgRenderer
-from urllib.request import urlopen
-from urllib.error import URLError
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea, QFrame, QCheckBox, QSpinBox
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 
-# Import account management classes
-from src.account_manager import AccountData, AccountManager, AuthenticationManager, ConfirmationManager
-from src.theme import ThemeManager, NoctuaTheme, ThemedComboBox
+from src.theme import ThemeManager, ThemedComboBox
 from src.settings import SettingsManager
 
 
@@ -34,19 +19,6 @@ class SettingsScreen(QWidget):
         self.setup_ui()
     
     def setup_ui(self):
-        """Setup the settings screen UI"""
-        # Clear existing layout if it exists
-        existing_layout = self.layout()
-        if existing_layout:
-            # Clear all widgets from existing layout
-            while existing_layout.count():
-                child = existing_layout.takeAt(0)
-                if child.widget():
-                    child.widget().setParent(None)
-            # Delete the layout
-            existing_layout.setParent(None)
-        
-        # Main layout for the settings screen
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)

@@ -90,8 +90,9 @@ class AccountsScreen(QWidget):
         self.scroll_area.setWidget(self.accounts_widget)
         layout.addWidget(self.scroll_area)
 
-        # Apply initial label colours
+        # Apply initial styles
         self._apply_label_styles()
+        self._apply_search_style()
 
         # Start the code-expiry countdown timer (always ticking)
         self._start_code_timer()
@@ -231,6 +232,7 @@ class AccountsScreen(QWidget):
     def update_theme(self):
         """Re-apply theme colours to all dynamically-styled elements."""
         self._apply_label_styles()
+        self._apply_search_style()
         self._tick_code_timer()
         # Rebuild empty state labels with new theme colours
         current_theme = ThemeManager.get_current_theme()
@@ -251,3 +253,23 @@ class AccountsScreen(QWidget):
         self.subtitle_label.setStyleSheet(
             f"color: {current_theme.TEXT_SECONDARY}; background: transparent;"
         )
+
+    def _apply_search_style(self):
+        current_theme = ThemeManager.get_current_theme()
+        self.search_input.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {current_theme.SURFACE};
+                border: 2px solid {current_theme.BORDER};
+                border-radius: 8px;
+                padding: 10px 16px;
+                font-size: 13px;
+                color: {current_theme.TEXT_PRIMARY};
+            }}
+            QLineEdit:focus {{
+                border-color: {current_theme.BORDER_FOCUS};
+                background-color: {current_theme.SURFACE_HOVER};
+            }}
+            QLineEdit::placeholder {{
+                color: {current_theme.TEXT_TERTIARY};
+            }}
+        """)

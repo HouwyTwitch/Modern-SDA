@@ -1,24 +1,10 @@
-import sys
-import json
-import os
-from typing import List, Dict, Optional
-from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QLineEdit, QPushButton, QScrollArea, QFrame, QSizePolicy,
-    QSpacerItem, QMessageBox, QDialog, QFormLayout, QDialogButtonBox,
-    QStackedWidget, QButtonGroup, QComboBox, QFileDialog,
-    QAbstractItemView
-)
-from PyQt5.QtCore import Qt, pyqtSignal, QSize, QTimer, QByteArray
-from PyQt5.QtGui import QFont, QPixmap, QPainter, QBrush, QColor, QIcon
-from PyQt5.QtSvg import QSvgRenderer
-from urllib.request import urlopen
-from urllib.error import URLError
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QFont
 
-# Import account management classes
-from src.account_manager import AccountData, AccountManager, AuthenticationManager, ConfirmationManager
+from src.account_manager import AccountData
 from src.ui.confirmation_item import ConfirmationItem
-from src.theme import ThemeManager, NoctuaTheme
+from src.theme import ThemeManager
 
 
 class ConfirmationsScreen(QWidget):
@@ -231,30 +217,12 @@ class ConfirmationsScreen(QWidget):
         # Get the main window to access the confirmation manager
         main_window = self._get_main_window()
         if not main_window:
-            QMessageBox.warning(self, "Error", "Main window not available to load confirmations")
+            self._show_error_state("Main window not available")
             return
-        
-        # Check if the managers exist as attributes of the main window
+
         if not hasattr(main_window, 'confirmation_manager') or not hasattr(main_window, 'auth_manager'):
-            try:
-                # Initialize managers if missing
-                from src.account_manager import create_account_managers
-                am, authm, confm = create_account_managers()
-                # Attach to main window
-                main_window.account_manager = am
-                main_window.auth_manager = authm
-                main_window.confirmation_manager = confm
-                # Reconnect signals to the main window instance (must be a SteamAuthenticatorGUI)
-                mw = main_window
-                confm.confirmations_loaded.connect(mw.on_confirmations_loaded)
-                confm.confirmation_processed.connect(mw.on_confirmation_processed)
-                authm.login_started.connect(mw.on_login_started)
-                authm.login_completed.connect(mw.on_login_completed)
-                authm.code_generated.connect(mw.on_code_generated)
-                authm.session_refreshed.connect(mw.on_session_refreshed)
-            except Exception as e:
-                QMessageBox.warning(self, "Error", f"Failed to initialize managers: {e}")
-                return
+            self._show_error_state("Managers not initialized")
+            return
         
         # Ensure account is authenticated before attempting to load confirmations
         try:
@@ -274,7 +242,6 @@ class ConfirmationsScreen(QWidget):
     def _async_login_then_load(self, account, main_window):
         """Authenticate account and then load confirmations"""
         try:
-            import asyncio
             from PyQt5.QtCore import QThread
 
             class LoginLoader(QThread):
@@ -296,24 +263,21 @@ class ConfirmationsScreen(QWidget):
             loader.finished.connect(lambda: self._on_login_then_load_finished(loader, account, main_window))
             loader.start()
         except Exception as e:
-            QMessageBox.warning(self, "Login Error", f"Failed to start login: {e}")
+            self._show_error_state(f"Failed to start login: {e}")
 
     def _on_login_then_load_finished(self, loader, account, main_window):
         if loader.error:
-            QMessageBox.warning(self, "Login Error", f"Login failed: {loader.error}")
+            self._show_error_state(f"Login failed: {loader.error}")
             return
         result = loader.result or {}
         if not result.get('success'):
-            QMessageBox.warning(self, "Login Error", result.get('error', 'Unknown error'))
+            self._show_error_state(result.get('error', 'Login failed'))
             return
-        # Proceed to load confirmations
         self._async_load_confirmations(account, main_window)
     
     def _async_load_confirmations(self, account, main_window):
         """Asynchronously load confirmations"""
         try:
-            # Load confirmations using the confirmation manager
-            import asyncio
             from PyQt5.QtCore import QThread
             
             # Create a simple worker to run the async function
@@ -347,9 +311,7 @@ class ConfirmationsScreen(QWidget):
             loader.start()
             
         except Exception as e:
-            print(f"Error starting confirmation loading: {e}")
-            # Fallback to sample data on error
-            self._load_sample_confirmations_for_account(account)
+            self._show_error_state(f"Failed to load confirmations: {e}")
     
     def _on_confirmations_loaded(self, loader, account):
         """Handle completion of confirmation loading"""
@@ -395,43 +357,6 @@ class ConfirmationsScreen(QWidget):
         except Exception as e:
             print(f"Error processing confirmations: {e}")
             self._show_error_state("Failed to process confirmations")
-    
-    def _load_sample_confirmations_for_account(self, account):
-        """Load sample confirmations for demonstration"""
-        if not self.selected_account or self.selected_account != account:
-            return  # Account changed while loading
-        
-        # Generate account-specific confirmations
-        account_confirmations = self._get_sample_confirmations_for_account(account)
-        
-        if not account_confirmations:
-            self.show_no_confirmations()
-        else:
-            self.show_confirmations()
-            # Generate unique IDs for sample confirmations
-            for i, (conf_type, description) in enumerate(account_confirmations):
-                confirmation_id = f"sample_{i}_{account.steam_id}"
-                self.add_confirmation_item(conf_type, description, confirmation_id)
-    
-    def _get_sample_confirmations_for_account(self, account):
-        """Get sample confirmations based on account"""
-        # Different confirmations for different accounts
-        confirmations_data = {
-            "Player1": [
-                ("Trade", f"Trade with TestUser123 - 2 item(s)"),
-                ("Market", f"Sell AK-47 | Redline (Field-Tested) for $15.50"),
-            ],
-            "SteamUser456": [
-                ("Trade", f"Trade with GamerFriend789 - 1 item(s)"),
-                ("Market", f"Buy M4A4 | Howl (Minimal Wear) for $850.00"),
-                ("Trade", f"Trade with TradingBot321 - 3 item(s)"),
-            ],
-            "TestAccount": [
-                ("Market", f"Sell Karambit | Fade (Factory New) for $1,200.00"),
-            ],
-        }
-        
-        return confirmations_data.get(account.account_name, [])
     
     def clear_confirmations(self):
         """Clear all confirmation items"""
@@ -539,13 +464,8 @@ class ConfirmationsScreen(QWidget):
             return
         
         main_window = self._get_main_window()
-        if not main_window:
-            QMessageBox.warning(self, "Error", "Unable to process confirmation")
-            return
-        
-        # Check if the managers exist as attributes of the main window
-        if not hasattr(main_window, 'confirmation_manager') or not hasattr(main_window, 'auth_manager'):
-            QMessageBox.warning(self, "Error", "Unable to process confirmation")
+        if not main_window or not hasattr(main_window, 'confirmation_manager') or not hasattr(main_window, 'auth_manager'):
+            self._show_error_state("Unable to process confirmation", temporary=True)
             return
         
         # Process the confirmation asynchronously
@@ -557,13 +477,8 @@ class ConfirmationsScreen(QWidget):
             return
         
         main_window = self._get_main_window()
-        if not main_window:
-            QMessageBox.warning(self, "Error", "Unable to process confirmation")
-            return
-        
-        # Check if the managers exist as attributes of the main window
-        if not hasattr(main_window, 'confirmation_manager') or not hasattr(main_window, 'auth_manager'):
-            QMessageBox.warning(self, "Error", "Unable to process confirmation")
+        if not main_window or not hasattr(main_window, 'confirmation_manager') or not hasattr(main_window, 'auth_manager'):
+            self._show_error_state("Unable to process confirmation", temporary=True)
             return
         
         # Process the confirmation asynchronously
@@ -620,8 +535,7 @@ class ConfirmationsScreen(QWidget):
             processor.start()
             
         except Exception as e:
-            print(f"Error starting confirmation processing: {e}")
-            QMessageBox.warning(self, "Error", "Failed to process confirmation")
+            self._show_error_state(f"Failed to process confirmation: {e}", temporary=True)
     
     def _on_confirmation_processed(self, processor, confirmation_id):
         """Handle completion of confirmation processing"""
