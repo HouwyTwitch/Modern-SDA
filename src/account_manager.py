@@ -5,6 +5,7 @@ This module provides classes for managing Steam accounts and interfacing with ai
 
 import json
 import os
+import threading
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, asdict
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
