@@ -1,6 +1,3 @@
-import threading
-import urllib.request
-
 from PyQt5.QtWidgets import (
     QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QGraphicsDropShadowEffect
 )
@@ -20,7 +17,6 @@ class AccountWidget(QFrame):
     account_selected = pyqtSignal(object)
     edit_requested = pyqtSignal(object)
     remove_requested = pyqtSignal(object)
-    avatar_fetched = pyqtSignal(bytes)
 
     def __init__(self, account: AccountData, parent=None):
         super().__init__(parent)
@@ -28,7 +24,6 @@ class AccountWidget(QFrame):
         self.is_hovered = False
         self.is_selected = False
         self.setup_ui()
-        self.avatar_fetched.connect(self._on_avatar_fetched)
         self.load_avatar()
 
     # ── Build UI ──────────────────────────────────────────────────────────
@@ -280,25 +275,16 @@ class AccountWidget(QFrame):
     # ── Avatar ────────────────────────────────────────────────────────────
 
     def load_avatar(self):
-        if self.account.avatar_url:
-            threading.Thread(
-                target=self._fetch_avatar_bytes,
-                args=(self.account.avatar_url,),
-                daemon=True,
-            ).start()
-        elif self.account.account_name:
+        """Show initial letter; a real avatar arrives later via set_avatar()."""
+        current = self.avatar_label.pixmap()
+        if current and not current.isNull():
+            return  # already displaying an avatar — keep it
+        if self.account.account_name:
             self.avatar_label.setPixmap(QPixmap())
             self.avatar_label.setText(self.account.account_name[0].upper())
 
-    def _fetch_avatar_bytes(self, url: str):
-        try:
-            with urllib.request.urlopen(url, timeout=10) as r:
-                data = r.read()
-            self.avatar_fetched.emit(data)
-        except Exception:
-            pass
-
-    def _on_avatar_fetched(self, data: bytes):
+    def set_avatar(self, data: bytes):
+        """Decode image bytes and display as a rounded avatar (called from main_window)."""
         pixmap = QPixmap()
         pixmap.loadFromData(data)
         if not pixmap.isNull():
@@ -307,6 +293,7 @@ class AccountWidget(QFrame):
             )
             self.avatar_label.setPixmap(pixmap)
             self.avatar_label.setText("")
+        # If decode failed, the initials fallback from load_avatar() stays visible
 
     @staticmethod
     def _clip_to_squircle(pixmap: QPixmap) -> QPixmap:
@@ -326,7 +313,6 @@ class AccountWidget(QFrame):
         self.account = account
         self.name_label.setText(account.account_name)
         self.steamid_label.setText(f"Steam ID: {account.steam_id}")
-        self.load_avatar()
 
     # ── Shadow animation ──────────────────────────────────────────────────
 

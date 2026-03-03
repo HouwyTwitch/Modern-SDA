@@ -140,6 +140,7 @@ class AccountManager(QObject):
     account_removed = pyqtSignal(str)   # steam_id
     account_updated = pyqtSignal(object)  # AccountData
     accounts_loaded = pyqtSignal()
+    avatar_loaded = pyqtSignal(str, bytes)  # steam_id, image_bytes
     
     def __init__(self):
         super().__init__()
@@ -256,16 +257,20 @@ class AccountManager(QObject):
         return self.accounts.copy()
 
     def _fetch_avatar_async(self, account: AccountData):
-        """Fetch avatar URL from Steam profile XML and notify widgets (no disk write)."""
+        """Fetch avatar image in one thread: resolve URL from XML if needed, then download bytes."""
         try:
-            url = f"https://steamcommunity.com/profiles/{account.steam_id}/?xml=1"
-            with urllib.request.urlopen(url, timeout=10) as response:
-                xml_data = response.read()
-            root = ET.fromstring(xml_data)
-            avatar_url = root.findtext('avatarFull') or root.findtext('avatarMedium') or ''
-            if avatar_url and avatar_url != account.avatar_url:
+            if not account.avatar_url:
+                xml_url = f"https://steamcommunity.com/profiles/{account.steam_id}/?xml=1"
+                with urllib.request.urlopen(xml_url, timeout=10) as r:
+                    root = ET.fromstring(r.read())
+                avatar_url = root.findtext('avatarFull') or root.findtext('avatarMedium') or ''
+                if not avatar_url:
+                    return
                 account.avatar_url = avatar_url
-                self.account_updated.emit(account)
+
+            with urllib.request.urlopen(account.avatar_url, timeout=10) as r:
+                data = r.read()
+            self.avatar_loaded.emit(account.steam_id, data)
         except Exception:
             pass
 

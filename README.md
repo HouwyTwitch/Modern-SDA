@@ -6,7 +6,8 @@ A modern PyQt5-based Steam Desktop Authenticator GUI.
 
 - **Multiple accounts** — add and manage as many Steam accounts as you need
 - **TOTP auth codes** — generates Steam Guard codes with a live countdown timer
-- **Trade confirmations** — view, accept, and decline pending trade/market confirmations
+- **All confirmation types** — accepts any Steam confirmation: trades, market listings, Steam API key activations, and more
+- **Trade confirmations** — view, accept, and decline pending confirmations
 - **Session persistence** — stores refresh tokens so you don't re-login on every launch
 - **Proxy support** — per-account HTTP proxy configuration (`http://user:pass@ip:port`)
 - **Themes** — built-in dark, light, and high-contrast themes with live switching
@@ -16,16 +17,14 @@ A modern PyQt5-based Steam Desktop Authenticator GUI.
 
 - Python 3.10+
 - [PyQt5](https://pypi.org/project/PyQt5/)
-- [aiosteampy](https://github.com/somespecialone/aiosteampy) (vendored copy included)
+- [aiosteampy](https://github.com/somespecialone/aiosteampy)
 - [aiohttp](https://pypi.org/project/aiohttp/)
 
 Install dependencies:
 
 ```bash
-pip install PyQt5 aiohttp
+pip install PyQt5 aiosteampy aiohttp
 ```
-
-> `aiosteampy` is bundled in the `aiosteampy/` directory and does not need to be installed separately.
 
 ## Usage
 

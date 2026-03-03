@@ -60,6 +60,7 @@ class SteamAuthenticatorGUI(QMainWindow):
         self.account_manager.account_removed.connect(self.on_account_removed)
         self.account_manager.accounts_loaded.connect(self.on_accounts_loaded)
         self.account_manager.account_updated.connect(self.on_account_updated)
+        self.account_manager.avatar_loaded.connect(self.on_avatar_loaded)
         
         # Connect authentication signals
         self.auth_manager.login_started.connect(self.on_login_started)
@@ -587,3 +588,9 @@ class SteamAuthenticatorGUI(QMainWindow):
         if self.selected_account and self.selected_account.steam_id == account.steam_id:
             self.selected_account = account
             self.accounts_screen.subtitle_label.setText(account.account_name)
+
+    def on_avatar_loaded(self, steam_id: str, data: bytes):
+        for widget in self.account_widgets:
+            if widget.account.steam_id == steam_id:
+                widget.set_avatar(data)
+                break
