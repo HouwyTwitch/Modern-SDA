@@ -346,14 +346,9 @@ class SteamAuthenticatorGUI(QMainWindow):
             )
 
     def on_accounts_loaded(self):
-        """Handle accounts loaded signal"""
-        # Load all accounts into UI
-        # Check if accounts screen is ready
         if hasattr(self, 'accounts_screen') and self.accounts_screen is not None:
             for account in self.account_manager.get_all_accounts():
                 self.on_account_added(account)
-        else:
-            pass
     
     def on_account_added(self, account: AccountData):
         """Handle account added signal"""
@@ -555,18 +550,10 @@ class SteamAuthenticatorGUI(QMainWindow):
             self.accounts_screen.title_label.setText(code)
     
     def on_session_refreshed(self, steam_id: str, success: bool):
-        if success:
-            # Session refreshed successfully
-            pass
-        else:
-            # Session refreshed successfully
-            pass
         pass
-    
+
     def on_confirmations_loaded(self, steam_id: str, confirmations: list):
-        """Handle confirmations loaded signal"""
-        # Let the confirmations screen own rendering to avoid duplicates
-        return
+        pass
     
     def on_confirmation_processed(self, steam_id: str, confirmation_id: str, accepted: bool):
         """Handle confirmation processed signal"""
@@ -592,7 +579,6 @@ class SteamAuthenticatorGUI(QMainWindow):
             self.confirmations_screen.process_decline_confirmation(confirmation_id)
 
     def on_account_updated(self, account: AccountData):
-        """Handle account updated (e.g., avatar fetched)"""
         for widget in self.account_widgets:
             if widget.account.steam_id == account.steam_id:
                 widget.update_account(account)

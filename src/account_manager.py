@@ -9,9 +9,6 @@ from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, asdict
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
 from datetime import datetime
-import urllib.request
-import xml.etree.ElementTree as ET
-import threading
 import asyncio
 
 
@@ -145,11 +142,6 @@ class AccountManager(QObject):
         super().__init__()
         self.accounts: List[AccountData] = []
         self._accounts_file = "accounts.json"
-        # Ensure avatars directory exists
-        try:
-            os.makedirs("avatars", exist_ok=True)
-        except Exception:
-            pass
     
     def add_account(self, mafile_path: str, password: str, proxy: str = "") -> Dict[str, Any]:
         """
@@ -177,22 +169,14 @@ class AccountManager(QObject):
             account = AccountData(
                 steam_id=str(steam_id),
                 account_name=mafile_data['account_name'],
-                avatar_url="",  # Will be loaded later
                 mafile_path=mafile_path,
                 password=password,
                 proxy=proxy,
             )
-            
-            # Add to accounts list
+
             self.accounts.append(account)
-            
-            # Save accounts
             self.save_accounts()
-            
-            # Emit signal for UI update
             self.account_added.emit(account)
-            # Fetch avatar in a real background thread (non-blocking)
-            threading.Thread(target=self._fetch_avatar_async, args=(account,), daemon=True).start()
             
             return {'success': True, 'account': account}
             
@@ -289,66 +273,12 @@ class AccountManager(QObject):
             
             self.accounts = [AccountData.from_dict(data) for data in accounts_data]
             self.accounts_loaded.emit()
-            # Trigger avatar fetch for all accounts in background threads
-            for account in self.accounts:
-                threading.Thread(target=self._fetch_avatar_async, args=(account,), daemon=True).start()
             return True
             
         except Exception as e:
             print(f"Failed to load accounts: {e}")
             return False
 
-    def _fetch_avatar_async(self, account: 'AccountData') -> None:
-        """Fetch avatar via simple HTTP requests to steam profile XML and save locally"""
-        try:
-            steam_id_str = str(account.steam_id)
-            if not steam_id_str.isdigit():
-                return
-            # Steam community XML profile
-            profile_url = f"https://steamcommunity.com/profiles/{steam_id_str}?xml=1"
-            with urllib.request.urlopen(profile_url, timeout=10) as resp:
-                xml_data = resp.read()
-            # Parse XML for avatarMedium or avatarFull
-            root = ET.fromstring(xml_data)
-            # Prefer avatarFull, then avatarMedium
-            avatar_url_node = root.find('avatarFull') or root.find('avatarMedium') or root.find('avatarIcon')
-            if avatar_url_node is None or not avatar_url_node.text:
-                return
-            avatar_url = avatar_url_node.text.strip()
-            # Prefer highest resolution variant by rewriting to `_full` when possible
-            try:
-                if "steamstatic.com" in avatar_url:
-                    if "_full" not in avatar_url:
-                        if "_medium" in avatar_url:
-                            avatar_url = avatar_url.replace("_medium", "_full")
-                        elif "_icon" in avatar_url:
-                            avatar_url = avatar_url.replace("_icon", "_full")
-                        else:
-                            # Append _full before extension if pattern matches hash.ext
-                            if avatar_url.rfind('.') > avatar_url.rfind('/'):
-                                dot = avatar_url.rfind('.')
-                                avatar_url = f"{avatar_url[:dot]}_full{avatar_url[dot:]}"
-            except Exception:
-                pass
-            # Download image
-            with urllib.request.urlopen(avatar_url, timeout=10) as img_resp:
-                img_bytes = img_resp.read()
-            # Save to avatars folder
-            ext = '.jpg'
-            lower_url = avatar_url.lower()
-            if lower_url.endswith('.png'):
-                ext = '.png'
-            local_path = os.path.join('avatars', f"{steam_id_str}{ext}")
-            with open(local_path, 'wb') as f:
-                f.write(img_bytes)
-            # Update account and persist
-            account.avatar_url = local_path
-            self.save_accounts()
-            # Notify UI that account updated
-            self.account_updated.emit(account)
-        except Exception:
-            # Silently ignore avatar fetch failures
-            pass
 
 
 class AuthenticationManager(QObject):

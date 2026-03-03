@@ -1,23 +1,7 @@
-import sys
-import json
-import os
-from typing import List, Dict, Optional
-from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QLineEdit, QPushButton, QScrollArea, QFrame, QSizePolicy,
-    QSpacerItem, QMessageBox, QDialog, QFormLayout, QDialogButtonBox,
-    QStackedWidget, QButtonGroup, QComboBox, QFileDialog,
-    QAbstractItemView
-)
-from PyQt5.QtCore import Qt, pyqtSignal, QSize, QTimer, QByteArray, QPropertyAnimation, QEasingCurve
-from PyQt5.QtGui import QFont, QPixmap, QPainter, QBrush, QColor, QIcon
-from PyQt5.QtSvg import QSvgRenderer
-from urllib.request import urlopen
-from urllib.error import URLError
-from PyQt5.QtWidgets import QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QPushButton, QGraphicsDropShadowEffect
+from PyQt5.QtCore import QPropertyAnimation, QEasingCurve
+from PyQt5.QtGui import QColor
 
-# Import account management classes
-from src.account_manager import AccountData, AccountManager, AuthenticationManager, ConfirmationManager
 from src.theme import ThemeManager
 
 

@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (
 )
 from src.theme import ThemeManager
 from PyQt5.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
-from PyQt5.QtGui import QFont, QPixmap, QColor, QPainter, QPainterPath
+from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 
 from src.account_manager import AccountData
@@ -275,35 +275,7 @@ class AccountWidget(QFrame):
 
     # ── Avatar ────────────────────────────────────────────────────────────
 
-    @staticmethod
-    def _clip_to_squircle(pixmap: QPixmap, size: int, radius: int) -> QPixmap:
-        """Return a copy of *pixmap* clipped to a rounded-rectangle mask."""
-        result = QPixmap(size, size)
-        result.fill(QColor(0, 0, 0, 0))
-        painter = QPainter(result)
-        painter.setRenderHint(QPainter.Antialiasing)
-        path = QPainterPath()
-        path.addRoundedRect(0, 0, size, size, radius, radius)
-        painter.setClipPath(path)
-        painter.drawPixmap(0, 0, pixmap)
-        painter.end()
-        return result
-
     def load_avatar(self):
-        if getattr(self.account, 'avatar_url', ''):
-            try:
-                pixmap = QPixmap(self.account.avatar_url)
-                if not pixmap.isNull():
-                    scaled = pixmap.scaled(
-                        _AVATAR_SIZE, _AVATAR_SIZE,
-                        Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation
-                    )
-                    clipped = self._clip_to_squircle(scaled, _AVATAR_SIZE, _AVATAR_RADIUS)
-                    self.avatar_label.setPixmap(clipped)
-                    self.avatar_label.setText("")
-                    return
-            except Exception:
-                pass
         if self.account.account_name:
             self.avatar_label.setText(self.account.account_name[0].upper())
 
