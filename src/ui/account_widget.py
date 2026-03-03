@@ -1,10 +1,12 @@
+import threading
+import urllib.request
+
 from PyQt5.QtWidgets import (
-    QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+    QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QGraphicsDropShadowEffect
 )
-from src.theme import ThemeManager
 from PyQt5.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
-from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtWidgets import QGraphicsDropShadowEffect
+from PyQt5.QtGui import QFont, QColor, QPixmap, QPainter, QPainterPath
+from src.theme import ThemeManager
 
 from src.account_manager import AccountData
 
@@ -18,6 +20,7 @@ class AccountWidget(QFrame):
     account_selected = pyqtSignal(object)
     edit_requested = pyqtSignal(object)
     remove_requested = pyqtSignal(object)
+    avatar_fetched = pyqtSignal(bytes)
 
     def __init__(self, account: AccountData, parent=None):
         super().__init__(parent)
@@ -25,6 +28,7 @@ class AccountWidget(QFrame):
         self.is_hovered = False
         self.is_selected = False
         self.setup_ui()
+        self.avatar_fetched.connect(self._on_avatar_fetched)
         self.load_avatar()
 
     # ── Build UI ──────────────────────────────────────────────────────────
@@ -276,8 +280,47 @@ class AccountWidget(QFrame):
     # ── Avatar ────────────────────────────────────────────────────────────
 
     def load_avatar(self):
-        if self.account.account_name:
+        if self.account.avatar_url:
+            threading.Thread(
+                target=self._fetch_avatar_bytes,
+                args=(self.account.avatar_url,),
+                daemon=True,
+            ).start()
+        elif self.account.account_name:
+            self.avatar_label.setPixmap(QPixmap())
             self.avatar_label.setText(self.account.account_name[0].upper())
+
+    def _fetch_avatar_bytes(self, url: str):
+        try:
+            with urllib.request.urlopen(url, timeout=10) as r:
+                data = r.read()
+            self.avatar_fetched.emit(data)
+        except Exception:
+            pass
+
+    def _on_avatar_fetched(self, data: bytes):
+        pixmap = QPixmap()
+        pixmap.loadFromData(data)
+        if not pixmap.isNull():
+            pixmap = self._clip_to_squircle(
+                pixmap.scaled(_AVATAR_SIZE, _AVATAR_SIZE, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+            )
+            self.avatar_label.setPixmap(pixmap)
+            self.avatar_label.setText("")
+
+    @staticmethod
+    def _clip_to_squircle(pixmap: QPixmap) -> QPixmap:
+        size = pixmap.size()
+        result = QPixmap(size)
+        result.fill(Qt.transparent)
+        painter = QPainter(result)
+        painter.setRenderHint(QPainter.Antialiasing)
+        path = QPainterPath()
+        path.addRoundedRect(0, 0, size.width(), size.height(), _AVATAR_RADIUS, _AVATAR_RADIUS)
+        painter.setClipPath(path)
+        painter.drawPixmap(0, 0, pixmap)
+        painter.end()
+        return result
 
     def update_account(self, account: AccountData):
         self.account = account

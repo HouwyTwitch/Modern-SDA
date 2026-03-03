@@ -6,6 +6,8 @@ This module provides classes for managing Steam accounts and interfacing with ai
 import json
 import os
 import threading
+import urllib.request
+import xml.etree.ElementTree as ET
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, asdict
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
@@ -178,7 +180,8 @@ class AccountManager(QObject):
             self.accounts.append(account)
             self.save_accounts()
             self.account_added.emit(account)
-            
+            threading.Thread(target=self._fetch_avatar_async, args=(account,), daemon=True).start()
+
             return {'success': True, 'account': account}
             
         except Exception as e:
@@ -251,7 +254,21 @@ class AccountManager(QObject):
     def get_all_accounts(self) -> List[AccountData]:
         """Get all accounts"""
         return self.accounts.copy()
-    
+
+    def _fetch_avatar_async(self, account: AccountData):
+        """Fetch avatar URL from Steam profile XML and notify widgets (no disk write)."""
+        try:
+            url = f"https://steamcommunity.com/profiles/{account.steam_id}/?xml=1"
+            with urllib.request.urlopen(url, timeout=10) as response:
+                xml_data = response.read()
+            root = ET.fromstring(xml_data)
+            avatar_url = root.findtext('avatarFull') or root.findtext('avatarMedium') or ''
+            if avatar_url and avatar_url != account.avatar_url:
+                account.avatar_url = avatar_url
+                self.account_updated.emit(account)
+        except Exception:
+            pass
+
     def save_accounts(self) -> bool:
         """Save accounts to file"""
         try:
@@ -274,6 +291,8 @@ class AccountManager(QObject):
             
             self.accounts = [AccountData.from_dict(data) for data in accounts_data]
             self.accounts_loaded.emit()
+            for account in self.accounts:
+                threading.Thread(target=self._fetch_avatar_async, args=(account,), daemon=True).start()
             return True
             
         except Exception as e:
