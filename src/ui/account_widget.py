@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QGraphicsDropShadowEffect
+    QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QGraphicsDropShadowEffect, QStyle
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QFont, QColor, QPixmap, QPainter, QPainterPath
@@ -118,34 +118,37 @@ class AccountWidget(QFrame):
         # Container always occupies its fixed width to prevent layout shift when
         # buttons appear/disappear — only the buttons inside are shown/hidden.
         self.actions_container = QFrame()
-        self.actions_container.setFixedWidth(80)
+        self.actions_container.setFixedWidth(84)
         self.actions_container.setStyleSheet("background-color: transparent; border: none;")
+
         actions_layout = QHBoxLayout(self.actions_container)
         actions_layout.setContentsMargins(0, 0, 0, 0)
         actions_layout.setSpacing(6)
-        actions_layout.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        actions_layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        self.edit_button = QPushButton("✎")
+        self.actions_container.setMinimumHeight(40)
+
+        self.edit_button = QPushButton()
         self.edit_button.setFixedSize(34, 34)
         self.edit_button.setToolTip("Edit account")
         self.edit_button.setVisible(False)
         self.edit_button.clicked.connect(lambda: self.edit_requested.emit(self.account))
 
-        self.remove_button = QPushButton("✕")
+        self.remove_button = QPushButton()
         self.remove_button.setFixedSize(34, 34)
         self.remove_button.setToolTip("Remove account")
         self.remove_button.setVisible(False)
         self.remove_button.clicked.connect(lambda: self.remove_requested.emit(self.account))
 
-        actions_layout.addWidget(self.edit_button)
-        actions_layout.addWidget(self.remove_button)
+        self.edit_button.setIcon(self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
+        self.remove_button.setIcon(self.style().standardIcon(QStyle.SP_TrashIcon))
+        self.edit_button.setIconSize(self.edit_button.size() * 0.55)
+        self.remove_button.setIconSize(self.remove_button.size() * 0.55)
+
+        actions_layout.addWidget(self.edit_button, alignment=Qt.AlignVCenter)
+        actions_layout.addWidget(self.remove_button, alignment=Qt.AlignVCenter)
 
         layout.addWidget(self.actions_container, 0, Qt.AlignRight | Qt.AlignVCenter)
-
-        self.setMouseTracking(True)
-        self.container.setMouseTracking(True)
-        self.setCursor(Qt.PointingHandCursor)
-        self.apply_action_styles()
 
     # ── Mouse events ──────────────────────────────────────────────────────
 

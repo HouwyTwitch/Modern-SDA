@@ -40,12 +40,6 @@ class EditAccountDialog(QDialog):
         layout.setSpacing(24)
         layout.setContentsMargins(32, 24, 32, 32)
 
-        # Heading
-        title = QLabel("Edit Steam Account")
-        title.setFont(QFont("Segoe UI", 20, QFont.Bold))
-        title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title)
-
         form_container = QFrame()
         form_layout = QVBoxLayout(form_container)
         form_layout.setSpacing(20)

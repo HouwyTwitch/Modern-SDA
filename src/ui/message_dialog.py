@@ -54,6 +54,7 @@ class MessageDialog(QDialog):
             btn.setProperty("primary", is_primary)
             btn.clicked.connect(lambda _=False, p=is_primary: self._on_click(p))
             btn_row.addWidget(btn)
+            btn.setProperty("dialog_action", True)
 
         content.addLayout(btn_row)
         root.addLayout(content)
@@ -84,6 +85,8 @@ class MessageDialog(QDialog):
             }}
         """)
         for btn in self.findChildren(QPushButton):
+            if not btn.property("dialog_action"):
+                continue
             if btn.property("primary"):
                 btn.setStyleSheet(f"""
                     QPushButton {{

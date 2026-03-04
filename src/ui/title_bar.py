@@ -13,6 +13,7 @@ _BTN_BASE = """
         color: {text_secondary};
         font-size: 18px;
         font-weight: 300;
+        padding: 2px 0px;
     }}
     QPushButton:hover {{
         background-color: {hover_bg};
