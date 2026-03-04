@@ -10,27 +10,30 @@ from PyQt5.QtGui import QPixmap, QPainter, QColor, QIcon
 from PyQt5.QtSvg import QSvgRenderer
 
 
-class NoctuaTheme:
-    """Noctua-inspired color palette"""
-    
-    # Colors
-    BACKGROUND = "#0F1115"      # Deep charcoal
-    SURFACE = "#151A22"        # Dark slate surface
-    SURFACE_ELEVATED = "#1B2230"  # Elevated surface
-    SURFACE_HOVER = "#222A36"   # Hover surface
-    ACCENT = "#5B8CFF"         # Modern blue
-    ACCENT_HOVER = "#6EA0FF"   # Lighter blue hover
-    ACCENT_PRESSED = "#3D6BE6" # Pressed state
-    TEXT_PRIMARY = "#F5F7FF"   # Soft white
-    TEXT_SECONDARY = "#B7C0D1" # Muted gray-blue
-    TEXT_TERTIARY = "#8A94A6" # Subtle gray-blue
-    BORDER = "#2A3342"        # Border color
-    BORDER_FOCUS = "#5B8CFF"  # Focused border
-    SUCCESS = "#45C486"       # Success green
-    SUCCESS_HOVER = "#38A872" # Darker success green
-    ERROR = "#F26B6B"         # Error red
-    ERROR_HOVER = "#D95959"   # Darker error red
-    SHADOW = "#06070A"        # Shadow color
+class MidnightTheme:
+    BACKGROUND = "#0E1116"
+    SURFACE = "#141A23"
+    SURFACE_ELEVATED = "#182131"
+    SURFACE_HOVER = "#1D283A"
+
+    ACCENT = "#4C7DFF"
+    ACCENT_HOVER = "#5A8BFF"
+    ACCENT_PRESSED = "#3E69E6"
+
+    TEXT_PRIMARY = "#EEF2FF"
+    TEXT_SECONDARY = "#AEB8CE"
+    TEXT_TERTIARY = "#7F8AA3"
+
+    BORDER = "#273245"
+    BORDER_FOCUS = "#4C7DFF"
+
+    SUCCESS = "#3DBE7A"
+    SUCCESS_HOVER = "#33A86B"
+
+    ERROR = "#E45D5D"
+    ERROR_HOVER = "#C94E4E"
+
+    SHADOW = "#05060A"
     
     @staticmethod
     def create_svg_icon(svg_content: str, color: str, size: int = 24) -> QIcon:
@@ -99,9 +102,9 @@ class NoctuaTheme:
     
     @staticmethod
     def get_stylesheet():
-        # Always use NoctuaTheme's own class attributes so that other themes
+        # Always use MidnightTheme's own class attributes so that other themes
         # can call this and then reliably str.replace() the Noctua colours.
-        theme = NoctuaTheme
+        theme = MidnightTheme
         return f"""
         QMainWindow {{
             background-color: {theme.BACKGROUND};
@@ -240,279 +243,364 @@ class NoctuaTheme:
 
 
 class LightTheme:
-    """Light theme color palette — soft blue-gray, easy on the eyes"""
+    BACKGROUND = "#F3F5F8"
+    SURFACE = "#E9EDF3"
+    SURFACE_ELEVATED = "#DDE3EC"
+    SURFACE_HOVER = "#D3DAE6"
 
-    BACKGROUND = "#F0F2F5"        # Soft blue-gray
-    SURFACE = "#E4E7EC"           # Slightly darker surface
-    SURFACE_ELEVATED = "#D8DCE4"  # Card / input surfaces
-    SURFACE_HOVER = "#CBD0DB"     # Hover state
-    ACCENT = "#3B82F6"            # Clear blue
-    ACCENT_HOVER = "#2563EB"      # Deeper blue
-    ACCENT_PRESSED = "#1D4ED8"    # Pressed
-    TEXT_PRIMARY = "#111827"      # Near-black
-    TEXT_SECONDARY = "#4B5563"    # Mid-gray
-    TEXT_TERTIARY = "#9CA3AF"     # Placeholder / muted
-    BORDER = "#C9CDD6"            # Subtle border
-    BORDER_FOCUS = "#3B82F6"      # Focus ring
-    SUCCESS = "#10B981"           # Green
-    SUCCESS_HOVER = "#059669"     # Darker green
-    ERROR = "#EF4444"             # Red
-    ERROR_HOVER = "#DC2626"       # Darker red
-    SHADOW = "#A0A9B8"            # Soft shadow
+    ACCENT = "#2F6BFF"
+    ACCENT_HOVER = "#3A77FF"
+    ACCENT_PRESSED = "#2457D8"
+
+    TEXT_PRIMARY = "#101828"
+    TEXT_SECONDARY = "#344054"
+    TEXT_TERTIARY = "#667085"
+
+    BORDER = "#C7D0DD"
+    BORDER_FOCUS = "#2F6BFF"
+
+    SUCCESS = "#12B76A"
+    SUCCESS_HOVER = "#0E9F5A"
+
+    ERROR = "#F04438"
+    ERROR_HOVER = "#D92D20"
+
+    SHADOW = "#AAB4C5"
 
     @staticmethod
     def create_svg_icon(svg_content: str, color: str, size: int = 24):
-        return NoctuaTheme.create_svg_icon(svg_content, color, size)
+        return MidnightTheme.create_svg_icon(svg_content, color, size)
 
     @staticmethod
     def get_accounts_svg():
-        return NoctuaTheme.get_accounts_svg()
+        return MidnightTheme.get_accounts_svg()
 
     @staticmethod
     def get_confirmations_svg():
-        return NoctuaTheme.get_confirmations_svg()
+        return MidnightTheme.get_confirmations_svg()
 
     @staticmethod
     def get_settings_svg():
-        return NoctuaTheme.get_settings_svg()
+        return MidnightTheme.get_settings_svg()
 
     @staticmethod
     def get_stylesheet():
-        return NoctuaTheme.get_stylesheet().replace(NoctuaTheme.BACKGROUND, LightTheme.BACKGROUND)\
-            .replace(NoctuaTheme.SURFACE, LightTheme.SURFACE)\
-            .replace(NoctuaTheme.SURFACE_ELEVATED, LightTheme.SURFACE_ELEVATED)\
-            .replace(NoctuaTheme.SURFACE_HOVER, LightTheme.SURFACE_HOVER)\
-            .replace(NoctuaTheme.ACCENT, LightTheme.ACCENT)\
-            .replace(NoctuaTheme.ACCENT_HOVER, LightTheme.ACCENT_HOVER)\
-            .replace(NoctuaTheme.ACCENT_PRESSED, LightTheme.ACCENT_PRESSED)\
-            .replace(NoctuaTheme.TEXT_PRIMARY, LightTheme.TEXT_PRIMARY)\
-            .replace(NoctuaTheme.TEXT_SECONDARY, LightTheme.TEXT_SECONDARY)\
-            .replace(NoctuaTheme.TEXT_TERTIARY, LightTheme.TEXT_TERTIARY)\
-            .replace(NoctuaTheme.BORDER, LightTheme.BORDER)\
-            .replace(NoctuaTheme.BORDER_FOCUS, LightTheme.BORDER_FOCUS)\
-            .replace(NoctuaTheme.SUCCESS, LightTheme.SUCCESS)\
-            .replace(NoctuaTheme.ERROR, LightTheme.ERROR)
+        return MidnightTheme.get_stylesheet().replace(MidnightTheme.BACKGROUND, LightTheme.BACKGROUND)\
+            .replace(MidnightTheme.SURFACE, LightTheme.SURFACE)\
+            .replace(MidnightTheme.SURFACE_ELEVATED, LightTheme.SURFACE_ELEVATED)\
+            .replace(MidnightTheme.SURFACE_HOVER, LightTheme.SURFACE_HOVER)\
+            .replace(MidnightTheme.ACCENT, LightTheme.ACCENT)\
+            .replace(MidnightTheme.ACCENT_HOVER, LightTheme.ACCENT_HOVER)\
+            .replace(MidnightTheme.ACCENT_PRESSED, LightTheme.ACCENT_PRESSED)\
+            .replace(MidnightTheme.TEXT_PRIMARY, LightTheme.TEXT_PRIMARY)\
+            .replace(MidnightTheme.TEXT_SECONDARY, LightTheme.TEXT_SECONDARY)\
+            .replace(MidnightTheme.TEXT_TERTIARY, LightTheme.TEXT_TERTIARY)\
+            .replace(MidnightTheme.BORDER, LightTheme.BORDER)\
+            .replace(MidnightTheme.BORDER_FOCUS, LightTheme.BORDER_FOCUS)\
+            .replace(MidnightTheme.SUCCESS, LightTheme.SUCCESS)\
+            .replace(MidnightTheme.ERROR, LightTheme.ERROR)
 
 
 class DarkTheme:
-    """Dark theme color palette"""
-    
-    # Colors
-    BACKGROUND = "#121212"        # Very dark gray
-    SURFACE = "#1E1E1E"          # Dark gray surface
-    SURFACE_ELEVATED = "#2C2C2C"  # Elevated surface
-    SURFACE_HOVER = "#383838"     # Hover surface
-    ACCENT = "#BB86FC"           # Purple accent
-    ACCENT_HOVER = "#985EFF"     # Lighter purple for hover
-    ACCENT_PRESSED = "#7C4DFF"   # Pressed state
-    TEXT_PRIMARY = "#FFFFFF"     # White
-    TEXT_SECONDARY = "#B3B3B3"   # Light gray
-    TEXT_TERTIARY = "#666666"    # Medium gray
-    BORDER = "#333333"          # Border color
-    BORDER_FOCUS = "#BB86FC"    # Focused border
-    SUCCESS = "#4CAF50"         # Green
-    SUCCESS_HOVER = "#3D9142"   # Darker green
-    ERROR = "#CF6679"           # Red
-    ERROR_HOVER = "#B85566"     # Darker red
-    SHADOW = "#000000"          # Shadow color
+    BACKGROUND = "#0F0F12"
+    SURFACE = "#17181C"
+    SURFACE_ELEVATED = "#1E2026"
+    SURFACE_HOVER = "#262A33"
+
+    ACCENT = "#7B61FF"
+    ACCENT_HOVER = "#8A74FF"
+    ACCENT_PRESSED = "#6447FF"
+
+    TEXT_PRIMARY = "#F5F7FF"
+    TEXT_SECONDARY = "#B5B9C6"
+    TEXT_TERTIARY = "#7D8292"
+
+    BORDER = "#2B2E36"
+    BORDER_FOCUS = "#7B61FF"
+
+    SUCCESS = "#2ECC71"
+    SUCCESS_HOVER = "#27B863"
+
+    ERROR = "#FF5C7A"
+    ERROR_HOVER = "#E24B67"
+
+    SHADOW = "#000000"
 
     @staticmethod
     def create_svg_icon(svg_content: str, color: str, size: int = 24):
-        return NoctuaTheme.create_svg_icon(svg_content, color, size)
+        return MidnightTheme.create_svg_icon(svg_content, color, size)
 
     @staticmethod
     def get_accounts_svg():
-        return NoctuaTheme.get_accounts_svg()
+        return MidnightTheme.get_accounts_svg()
 
     @staticmethod
     def get_confirmations_svg():
-        return NoctuaTheme.get_confirmations_svg()
+        return MidnightTheme.get_confirmations_svg()
 
     @staticmethod
     def get_settings_svg():
-        return NoctuaTheme.get_settings_svg()
+        return MidnightTheme.get_settings_svg()
 
     @staticmethod
     def get_stylesheet():
-        return NoctuaTheme.get_stylesheet().replace(NoctuaTheme.BACKGROUND, DarkTheme.BACKGROUND)\
-            .replace(NoctuaTheme.SURFACE, DarkTheme.SURFACE)\
-            .replace(NoctuaTheme.SURFACE_ELEVATED, DarkTheme.SURFACE_ELEVATED)\
-            .replace(NoctuaTheme.SURFACE_HOVER, DarkTheme.SURFACE_HOVER)\
-            .replace(NoctuaTheme.ACCENT, DarkTheme.ACCENT)\
-            .replace(NoctuaTheme.ACCENT_HOVER, DarkTheme.ACCENT_HOVER)\
-            .replace(NoctuaTheme.ACCENT_PRESSED, DarkTheme.ACCENT_PRESSED)\
-            .replace(NoctuaTheme.TEXT_PRIMARY, DarkTheme.TEXT_PRIMARY)\
-            .replace(NoctuaTheme.TEXT_SECONDARY, DarkTheme.TEXT_SECONDARY)\
-            .replace(NoctuaTheme.TEXT_TERTIARY, DarkTheme.TEXT_TERTIARY)\
-            .replace(NoctuaTheme.BORDER, DarkTheme.BORDER)\
-            .replace(NoctuaTheme.BORDER_FOCUS, DarkTheme.BORDER_FOCUS)\
-            .replace(NoctuaTheme.SUCCESS, DarkTheme.SUCCESS)\
-            .replace(NoctuaTheme.ERROR, DarkTheme.ERROR)
+        return MidnightTheme.get_stylesheet().replace(MidnightTheme.BACKGROUND, DarkTheme.BACKGROUND)\
+            .replace(MidnightTheme.SURFACE, DarkTheme.SURFACE)\
+            .replace(MidnightTheme.SURFACE_ELEVATED, DarkTheme.SURFACE_ELEVATED)\
+            .replace(MidnightTheme.SURFACE_HOVER, DarkTheme.SURFACE_HOVER)\
+            .replace(MidnightTheme.ACCENT, DarkTheme.ACCENT)\
+            .replace(MidnightTheme.ACCENT_HOVER, DarkTheme.ACCENT_HOVER)\
+            .replace(MidnightTheme.ACCENT_PRESSED, DarkTheme.ACCENT_PRESSED)\
+            .replace(MidnightTheme.TEXT_PRIMARY, DarkTheme.TEXT_PRIMARY)\
+            .replace(MidnightTheme.TEXT_SECONDARY, DarkTheme.TEXT_SECONDARY)\
+            .replace(MidnightTheme.TEXT_TERTIARY, DarkTheme.TEXT_TERTIARY)\
+            .replace(MidnightTheme.BORDER, DarkTheme.BORDER)\
+            .replace(MidnightTheme.BORDER_FOCUS, DarkTheme.BORDER_FOCUS)\
+            .replace(MidnightTheme.SUCCESS, DarkTheme.SUCCESS)\
+            .replace(MidnightTheme.ERROR, DarkTheme.ERROR)
 
 
 class OceanTheme:
-    """Ocean-inspired color palette"""
+    BACKGROUND = "#071A23"
+    SURFACE = "#0E2430"
+    SURFACE_ELEVATED = "#123040"
+    SURFACE_HOVER = "#173C51"
 
-    BACKGROUND = "#0B1F2A"
-    SURFACE = "#112836"
-    SURFACE_ELEVATED = "#183445"
-    SURFACE_HOVER = "#21465C"
-    ACCENT = "#2EC4B6"
-    ACCENT_HOVER = "#45D6C8"
-    ACCENT_PRESSED = "#1BAA9C"
-    TEXT_PRIMARY = "#E8F5F7"
+    ACCENT = "#2BB8AE"
+    ACCENT_HOVER = "#3AC7BD"
+    ACCENT_PRESSED = "#219A93"
+
+    TEXT_PRIMARY = "#EAF6F7"
     TEXT_SECONDARY = "#A7C6CC"
-    TEXT_TERTIARY = "#7FA3AA"
-    BORDER = "#234354"
-    BORDER_FOCUS = "#2EC4B6"
-    SUCCESS = "#4CD99A"
-    SUCCESS_HOVER = "#3DC285"
+    TEXT_TERTIARY = "#7196A3"
+
+    BORDER = "#204053"
+    BORDER_FOCUS = "#2BB8AE"
+
+    SUCCESS = "#38D39F"
+    SUCCESS_HOVER = "#2DBB8C"
+
     ERROR = "#FF6B6B"
-    ERROR_HOVER = "#E55555"
-    SHADOW = "#08151C"
+    ERROR_HOVER = "#E25555"
+
+    SHADOW = "#061219"
 
     @staticmethod
     def create_svg_icon(svg_content: str, color: str, size: int = 24):
-        return NoctuaTheme.create_svg_icon(svg_content, color, size)
+        return MidnightTheme.create_svg_icon(svg_content, color, size)
 
     @staticmethod
     def get_accounts_svg():
-        return NoctuaTheme.get_accounts_svg()
+        return MidnightTheme.get_accounts_svg()
 
     @staticmethod
     def get_confirmations_svg():
-        return NoctuaTheme.get_confirmations_svg()
+        return MidnightTheme.get_confirmations_svg()
 
     @staticmethod
     def get_settings_svg():
-        return NoctuaTheme.get_settings_svg()
+        return MidnightTheme.get_settings_svg()
 
     @staticmethod
     def get_stylesheet():
-        return NoctuaTheme.get_stylesheet().replace(NoctuaTheme.BACKGROUND, OceanTheme.BACKGROUND)\
-            .replace(NoctuaTheme.SURFACE, OceanTheme.SURFACE)\
-            .replace(NoctuaTheme.SURFACE_ELEVATED, OceanTheme.SURFACE_ELEVATED)\
-            .replace(NoctuaTheme.SURFACE_HOVER, OceanTheme.SURFACE_HOVER)\
-            .replace(NoctuaTheme.ACCENT, OceanTheme.ACCENT)\
-            .replace(NoctuaTheme.ACCENT_HOVER, OceanTheme.ACCENT_HOVER)\
-            .replace(NoctuaTheme.ACCENT_PRESSED, OceanTheme.ACCENT_PRESSED)\
-            .replace(NoctuaTheme.TEXT_PRIMARY, OceanTheme.TEXT_PRIMARY)\
-            .replace(NoctuaTheme.TEXT_SECONDARY, OceanTheme.TEXT_SECONDARY)\
-            .replace(NoctuaTheme.TEXT_TERTIARY, OceanTheme.TEXT_TERTIARY)\
-            .replace(NoctuaTheme.BORDER, OceanTheme.BORDER)\
-            .replace(NoctuaTheme.BORDER_FOCUS, OceanTheme.BORDER_FOCUS)\
-            .replace(NoctuaTheme.SUCCESS, OceanTheme.SUCCESS)\
-            .replace(NoctuaTheme.ERROR, OceanTheme.ERROR)
+        return MidnightTheme.get_stylesheet().replace(MidnightTheme.BACKGROUND, OceanTheme.BACKGROUND)\
+            .replace(MidnightTheme.SURFACE, OceanTheme.SURFACE)\
+            .replace(MidnightTheme.SURFACE_ELEVATED, OceanTheme.SURFACE_ELEVATED)\
+            .replace(MidnightTheme.SURFACE_HOVER, OceanTheme.SURFACE_HOVER)\
+            .replace(MidnightTheme.ACCENT, OceanTheme.ACCENT)\
+            .replace(MidnightTheme.ACCENT_HOVER, OceanTheme.ACCENT_HOVER)\
+            .replace(MidnightTheme.ACCENT_PRESSED, OceanTheme.ACCENT_PRESSED)\
+            .replace(MidnightTheme.TEXT_PRIMARY, OceanTheme.TEXT_PRIMARY)\
+            .replace(MidnightTheme.TEXT_SECONDARY, OceanTheme.TEXT_SECONDARY)\
+            .replace(MidnightTheme.TEXT_TERTIARY, OceanTheme.TEXT_TERTIARY)\
+            .replace(MidnightTheme.BORDER, OceanTheme.BORDER)\
+            .replace(MidnightTheme.BORDER_FOCUS, OceanTheme.BORDER_FOCUS)\
+            .replace(MidnightTheme.SUCCESS, OceanTheme.SUCCESS)\
+            .replace(MidnightTheme.ERROR, OceanTheme.ERROR)
 
 
 class ForestTheme:
-    """Forest-inspired color palette"""
+    BACKGROUND = "#08140E"
+    SURFACE = "#0F2218"
+    SURFACE_ELEVATED = "#143025"
+    SURFACE_HOVER = "#1A3A2E"
 
-    BACKGROUND = "#0E1A13"
-    SURFACE = "#16241B"
-    SURFACE_ELEVATED = "#1E2E23"
-    SURFACE_HOVER = "#243A2D"
-    ACCENT = "#6BCB77"
-    ACCENT_HOVER = "#7DD989"
-    ACCENT_PRESSED = "#56B965"
-    TEXT_PRIMARY = "#F3F7F0"
-    TEXT_SECONDARY = "#B7C8B0"
-    TEXT_TERTIARY = "#8FA08A"
-    BORDER = "#2B3D30"
-    BORDER_FOCUS = "#6BCB77"
-    SUCCESS = "#5ED092"
-    SUCCESS_HOVER = "#4DB87D"
-    ERROR = "#F26B6B"
-    ERROR_HOVER = "#D95959"
-    SHADOW = "#0A120D"
+    ACCENT = "#5FBF7A"
+    ACCENT_HOVER = "#70CD8A"
+    ACCENT_PRESSED = "#4FA76A"
+
+    TEXT_PRIMARY = "#F1F7F2"
+    TEXT_SECONDARY = "#B6C8BA"
+    TEXT_TERTIARY = "#7D9A86"
+
+    BORDER = "#234234"
+    BORDER_FOCUS = "#5FBF7A"
+
+    SUCCESS = "#49D18A"
+    SUCCESS_HOVER = "#3ABA79"
+
+    ERROR = "#E86767"
+    ERROR_HOVER = "#CD5555"
+
+    SHADOW = "#050E0A"
 
     @staticmethod
     def create_svg_icon(svg_content: str, color: str, size: int = 24):
-        return NoctuaTheme.create_svg_icon(svg_content, color, size)
+        return MidnightTheme.create_svg_icon(svg_content, color, size)
 
     @staticmethod
     def get_accounts_svg():
-        return NoctuaTheme.get_accounts_svg()
+        return MidnightTheme.get_accounts_svg()
 
     @staticmethod
     def get_confirmations_svg():
-        return NoctuaTheme.get_confirmations_svg()
+        return MidnightTheme.get_confirmations_svg()
 
     @staticmethod
     def get_settings_svg():
-        return NoctuaTheme.get_settings_svg()
+        return MidnightTheme.get_settings_svg()
 
     @staticmethod
     def get_stylesheet():
-        return NoctuaTheme.get_stylesheet().replace(NoctuaTheme.BACKGROUND, ForestTheme.BACKGROUND)\
-            .replace(NoctuaTheme.SURFACE, ForestTheme.SURFACE)\
-            .replace(NoctuaTheme.SURFACE_ELEVATED, ForestTheme.SURFACE_ELEVATED)\
-            .replace(NoctuaTheme.SURFACE_HOVER, ForestTheme.SURFACE_HOVER)\
-            .replace(NoctuaTheme.ACCENT, ForestTheme.ACCENT)\
-            .replace(NoctuaTheme.ACCENT_HOVER, ForestTheme.ACCENT_HOVER)\
-            .replace(NoctuaTheme.ACCENT_PRESSED, ForestTheme.ACCENT_PRESSED)\
-            .replace(NoctuaTheme.TEXT_PRIMARY, ForestTheme.TEXT_PRIMARY)\
-            .replace(NoctuaTheme.TEXT_SECONDARY, ForestTheme.TEXT_SECONDARY)\
-            .replace(NoctuaTheme.TEXT_TERTIARY, ForestTheme.TEXT_TERTIARY)\
-            .replace(NoctuaTheme.BORDER, ForestTheme.BORDER)\
-            .replace(NoctuaTheme.BORDER_FOCUS, ForestTheme.BORDER_FOCUS)\
-            .replace(NoctuaTheme.SUCCESS, ForestTheme.SUCCESS)\
-            .replace(NoctuaTheme.ERROR, ForestTheme.ERROR)
+        return MidnightTheme.get_stylesheet().replace(MidnightTheme.BACKGROUND, ForestTheme.BACKGROUND)\
+            .replace(MidnightTheme.SURFACE, ForestTheme.SURFACE)\
+            .replace(MidnightTheme.SURFACE_ELEVATED, ForestTheme.SURFACE_ELEVATED)\
+            .replace(MidnightTheme.SURFACE_HOVER, ForestTheme.SURFACE_HOVER)\
+            .replace(MidnightTheme.ACCENT, ForestTheme.ACCENT)\
+            .replace(MidnightTheme.ACCENT_HOVER, ForestTheme.ACCENT_HOVER)\
+            .replace(MidnightTheme.ACCENT_PRESSED, ForestTheme.ACCENT_PRESSED)\
+            .replace(MidnightTheme.TEXT_PRIMARY, ForestTheme.TEXT_PRIMARY)\
+            .replace(MidnightTheme.TEXT_SECONDARY, ForestTheme.TEXT_SECONDARY)\
+            .replace(MidnightTheme.TEXT_TERTIARY, ForestTheme.TEXT_TERTIARY)\
+            .replace(MidnightTheme.BORDER, ForestTheme.BORDER)\
+            .replace(MidnightTheme.BORDER_FOCUS, ForestTheme.BORDER_FOCUS)\
+            .replace(MidnightTheme.SUCCESS, ForestTheme.SUCCESS)\
+            .replace(MidnightTheme.ERROR, ForestTheme.ERROR)
 
 
 class SolarTheme:
-    """Solar-inspired warm amber dark palette"""
+    BACKGROUND = "#17110C"
+    SURFACE = "#211A14"
+    SURFACE_ELEVATED = "#2C221A"
+    SURFACE_HOVER = "#372B21"
 
-    BACKGROUND = "#1E1611"        # Deep warm brown
-    SURFACE = "#28201A"           # Warm surface
-    SURFACE_ELEVATED = "#342920"  # Card surfaces
-    SURFACE_HOVER = "#41342A"     # Hover state
-    ACCENT = "#E8903A"            # Warm amber
-    ACCENT_HOVER = "#F0A250"      # Brighter amber
-    ACCENT_PRESSED = "#C97826"    # Pressed amber
-    TEXT_PRIMARY = "#F5E6D0"      # Warm off-white
-    TEXT_SECONDARY = "#C4A07A"    # Warm mid-tone
-    TEXT_TERTIARY = "#8B6A4E"     # Muted warm brown
-    BORDER = "#4A3525"            # Warm border
-    BORDER_FOCUS = "#E8903A"      # Amber focus ring
-    SUCCESS = "#5DBB8A"           # Warm green
-    SUCCESS_HOVER = "#4DA070"     # Darker green
-    ERROR = "#E86060"             # Warm red
-    ERROR_HOVER = "#CC4A4A"       # Darker red
-    SHADOW = "#0D0A06"            # Deep shadow
+    ACCENT = "#D98A3A"
+    ACCENT_HOVER = "#E39A52"
+    ACCENT_PRESSED = "#BF7430"
+
+    TEXT_PRIMARY = "#F6EBDD"
+    TEXT_SECONDARY = "#CDB59C"
+    TEXT_TERTIARY = "#9B7C62"
+
+    BORDER = "#3F2F22"
+    BORDER_FOCUS = "#D98A3A"
+
+    SUCCESS = "#46C48A"
+    SUCCESS_HOVER = "#39AE78"
+
+    ERROR = "#E46363"
+    ERROR_HOVER = "#C95252"
+
+    SHADOW = "#0B0704"
 
     @staticmethod
     def create_svg_icon(svg_content: str, color: str, size: int = 24):
-        return NoctuaTheme.create_svg_icon(svg_content, color, size)
+        return MidnightTheme.create_svg_icon(svg_content, color, size)
 
     @staticmethod
     def get_accounts_svg():
-        return NoctuaTheme.get_accounts_svg()
+        return MidnightTheme.get_accounts_svg()
 
     @staticmethod
     def get_confirmations_svg():
-        return NoctuaTheme.get_confirmations_svg()
+        return MidnightTheme.get_confirmations_svg()
 
     @staticmethod
     def get_settings_svg():
-        return NoctuaTheme.get_settings_svg()
+        return MidnightTheme.get_settings_svg()
 
     @staticmethod
     def get_stylesheet():
-        return NoctuaTheme.get_stylesheet().replace(NoctuaTheme.BACKGROUND, SolarTheme.BACKGROUND)\
-            .replace(NoctuaTheme.SURFACE, SolarTheme.SURFACE)\
-            .replace(NoctuaTheme.SURFACE_ELEVATED, SolarTheme.SURFACE_ELEVATED)\
-            .replace(NoctuaTheme.SURFACE_HOVER, SolarTheme.SURFACE_HOVER)\
-            .replace(NoctuaTheme.ACCENT, SolarTheme.ACCENT)\
-            .replace(NoctuaTheme.ACCENT_HOVER, SolarTheme.ACCENT_HOVER)\
-            .replace(NoctuaTheme.ACCENT_PRESSED, SolarTheme.ACCENT_PRESSED)\
-            .replace(NoctuaTheme.TEXT_PRIMARY, SolarTheme.TEXT_PRIMARY)\
-            .replace(NoctuaTheme.TEXT_SECONDARY, SolarTheme.TEXT_SECONDARY)\
-            .replace(NoctuaTheme.TEXT_TERTIARY, SolarTheme.TEXT_TERTIARY)\
-            .replace(NoctuaTheme.BORDER, SolarTheme.BORDER)\
-            .replace(NoctuaTheme.BORDER_FOCUS, SolarTheme.BORDER_FOCUS)\
-            .replace(NoctuaTheme.SUCCESS, SolarTheme.SUCCESS)\
-            .replace(NoctuaTheme.ERROR, SolarTheme.ERROR)
+        return MidnightTheme.get_stylesheet().replace(MidnightTheme.BACKGROUND, SolarTheme.BACKGROUND)\
+            .replace(MidnightTheme.SURFACE, SolarTheme.SURFACE)\
+            .replace(MidnightTheme.SURFACE_ELEVATED, SolarTheme.SURFACE_ELEVATED)\
+            .replace(MidnightTheme.SURFACE_HOVER, SolarTheme.SURFACE_HOVER)\
+            .replace(MidnightTheme.ACCENT, SolarTheme.ACCENT)\
+            .replace(MidnightTheme.ACCENT_HOVER, SolarTheme.ACCENT_HOVER)\
+            .replace(MidnightTheme.ACCENT_PRESSED, SolarTheme.ACCENT_PRESSED)\
+            .replace(MidnightTheme.TEXT_PRIMARY, SolarTheme.TEXT_PRIMARY)\
+            .replace(MidnightTheme.TEXT_SECONDARY, SolarTheme.TEXT_SECONDARY)\
+            .replace(MidnightTheme.TEXT_TERTIARY, SolarTheme.TEXT_TERTIARY)\
+            .replace(MidnightTheme.BORDER, SolarTheme.BORDER)\
+            .replace(MidnightTheme.BORDER_FOCUS, SolarTheme.BORDER_FOCUS)\
+            .replace(MidnightTheme.SUCCESS, SolarTheme.SUCCESS)\
+            .replace(MidnightTheme.ERROR, SolarTheme.ERROR)
+
+class OldMoneyTheme:
+    BACKGROUND = "#14100C"
+    SURFACE = "#1D1712"
+    SURFACE_ELEVATED = "#271F18"
+    SURFACE_HOVER = "#31271E"
+
+    ACCENT = "#B08A4A"
+    ACCENT_HOVER = "#C19A59"
+    ACCENT_PRESSED = "#96733C"
+
+    TEXT_PRIMARY = "#F3E9D8"
+    TEXT_SECONDARY = "#D4C3AA"
+    TEXT_TERTIARY = "#A68E72"
+
+    BORDER = "#3A2C21"
+    BORDER_FOCUS = "#B08A4A"
+
+    SUCCESS = "#5A8F6B"
+    SUCCESS_HOVER = "#4E7F5E"
+
+    ERROR = "#B14A4A"
+    ERROR_HOVER = "#9A3F3F"
+
+    SHADOW = "#070503"
+
+    @staticmethod
+    def create_svg_icon(svg_content: str, color: str, size: int = 24):
+        return MidnightTheme.create_svg_icon(svg_content, color, size)
+
+    @staticmethod
+    def get_accounts_svg():
+        return MidnightTheme.get_accounts_svg()
+
+    @staticmethod
+    def get_confirmations_svg():
+        return MidnightTheme.get_confirmations_svg()
+
+    @staticmethod
+    def get_settings_svg():
+        return MidnightTheme.get_settings_svg()
+
+    @staticmethod
+    def get_accept_svg():
+        return MidnightTheme.get_accept_svg()
+
+    @staticmethod
+    def get_decline_svg():
+        return MidnightTheme.get_decline_svg()
+
+    @staticmethod
+    def get_stylesheet():
+        return MidnightTheme.get_stylesheet().replace(MidnightTheme.BACKGROUND, OldMoneyTheme.BACKGROUND)\
+            .replace(MidnightTheme.SURFACE, OldMoneyTheme.SURFACE)\
+            .replace(MidnightTheme.SURFACE_ELEVATED, OldMoneyTheme.SURFACE_ELEVATED)\
+            .replace(MidnightTheme.SURFACE_HOVER, OldMoneyTheme.SURFACE_HOVER)\
+            .replace(MidnightTheme.ACCENT, OldMoneyTheme.ACCENT)\
+            .replace(MidnightTheme.ACCENT_HOVER, OldMoneyTheme.ACCENT_HOVER)\
+            .replace(MidnightTheme.ACCENT_PRESSED, OldMoneyTheme.ACCENT_PRESSED)\
+            .replace(MidnightTheme.TEXT_PRIMARY, OldMoneyTheme.TEXT_PRIMARY)\
+            .replace(MidnightTheme.TEXT_SECONDARY, OldMoneyTheme.TEXT_SECONDARY)\
+            .replace(MidnightTheme.TEXT_TERTIARY, OldMoneyTheme.TEXT_TERTIARY)\
+            .replace(MidnightTheme.BORDER, OldMoneyTheme.BORDER)\
+            .replace(MidnightTheme.BORDER_FOCUS, OldMoneyTheme.BORDER_FOCUS)\
+            .replace(MidnightTheme.SUCCESS, OldMoneyTheme.SUCCESS)\
+            .replace(MidnightTheme.ERROR, OldMoneyTheme.ERROR)
 
 
 # Global theme manager
@@ -520,12 +608,13 @@ class ThemeManager:
     """Manages application themes"""
 
     themes = {
-        "Midnight": NoctuaTheme,  # renamed from "Noctua" to match its dark-blue coloring
+        "Midnight": MidnightTheme,  # renamed from "Noctua" to match its dark-blue coloring
         "Light": LightTheme,
         "Dark": DarkTheme,
         "Ocean": OceanTheme,
         "Forest": ForestTheme,
         "Solar": SolarTheme,
+        "Old Money": OldMoneyTheme
     }
 
     current_theme = "Midnight"
