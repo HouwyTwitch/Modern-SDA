@@ -2,10 +2,11 @@
 
 A modern PyQt5-based Steam Desktop Authenticator GUI.
 
-<img width="481" height="721" alt="image" src="https://github.com/user-attachments/assets/abc26166-7670-4b4e-b15b-b1919621adb7" />
-<img width="477" height="721" alt="image" src="https://github.com/user-attachments/assets/b7b52041-98f4-42cb-a728-03340d9f7d9a" />
-<img width="479" height="720" alt="image" src="https://github.com/user-attachments/assets/0a65fba2-32ca-4e20-a986-5a54cc728a1b" />
-<img width="478" height="513" alt="image" src="https://github.com/user-attachments/assets/944d8d19-968d-428b-b17f-78704a251e18" />
+<img width="479" height="718" alt="image" src="https://github.com/user-attachments/assets/702a9120-2e5b-4686-bebc-363ae38a7745" />
+<img width="480" height="714" alt="image" src="https://github.com/user-attachments/assets/86ee6030-05bf-4eff-a03d-6e485aaae47e" />
+<img width="474" height="718" alt="image" src="https://github.com/user-attachments/assets/145b51d5-9ce9-4a54-84b9-84441e65045b" />
+<img width="481" height="545" alt="image" src="https://github.com/user-attachments/assets/d03417bc-32b5-4f7f-b746-555a5a586e3c" />
+
 
 
 ## Features
@@ -81,5 +82,6 @@ src/
 ## License
 
 MIT
+
 
 
