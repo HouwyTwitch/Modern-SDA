@@ -1,19 +1,34 @@
 """QR login approval dialog.
 
-Lets the user paste a Steam QR challenge URL (from "Sign in on computer") and
-approve or deny it on behalf of the selected account. Optionally decodes the
-URL from a clipboard image when pyzbar + Pillow are available.
+Lets the user approve (or deny) a Steam QR login request on behalf of the
+selected account by **decoding a QR code image from the clipboard** — the
+same flow as the Android app. The user takes a screenshot of the "Sign in on
+computer" QR, copies the image to the clipboard, opens this dialog, and the
+URL is extracted automatically. A file-picker fallback accepts .png/.jpg
+screenshots, and the URL can still be pasted as text if preferred.
+
+Requires ``pyzbar`` + ``Pillow`` for image decoding.
 """
 
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-    QApplication, QMessageBox, QSizePolicy
+    QApplication, QMessageBox, QFileDialog
 )
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QFont
 
 from src.account_manager import AccountData, AuthenticationManager
 from src.theme import ThemeManager
+
+
+def _qr_decoder_available() -> bool:
+    """Return True when pyzbar + Pillow are importable."""
+    try:
+        from PIL import Image  # noqa: F401
+        from pyzbar.pyzbar import decode  # noqa: F401
+        return True
+    except Exception:
+        return False
 
 
 class _QrApproveWorker(QThread):
@@ -41,7 +56,7 @@ class _QrApproveWorker(QThread):
 
 
 class QrLoginDialog(QDialog):
-    """Paste-a-URL dialog for approving Steam QR logins."""
+    """QR-image-first dialog for approving Steam QR logins."""
 
     def __init__(self, auth_manager: AuthenticationManager, account: AccountData, parent=None):
         super().__init__(parent)
@@ -50,10 +65,13 @@ class QrLoginDialog(QDialog):
         self._worker: _QrApproveWorker | None = None
 
         self.setWindowTitle("QR Login")
-        self.setMinimumWidth(460)
+        self.setMinimumWidth(480)
         self.setModal(True)
         self._build_ui()
         self._apply_theme()
+
+        # Auto-decode whatever is already on the clipboard as soon as we open.
+        QTimer.singleShot(0, self._try_decode_clipboard_silent)
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
@@ -69,29 +87,48 @@ class QrLoginDialog(QDialog):
         layout.addWidget(account_label)
 
         hint = QLabel(
-            "Paste the Steam QR login URL (from scanning the 'Sign in on computer' QR)."
+            "Copy a screenshot of Steam's QR code to your clipboard, then click "
+            "\"Decode QR from Clipboard\". The sign-in URL will be extracted "
+            "automatically."
         )
         hint.setWordWrap(True)
         layout.addWidget(hint)
 
+        # Primary action row — image-based decoding
+        image_row = QHBoxLayout()
+        image_row.setSpacing(8)
+        self.decode_clipboard_button = QPushButton("Decode QR from Clipboard")
+        self.decode_clipboard_button.setMinimumHeight(40)
+        self.decode_clipboard_button.clicked.connect(self._decode_from_clipboard)
+        image_row.addWidget(self.decode_clipboard_button, 1)
+
+        self.open_image_button = QPushButton("Open Image…")
+        self.open_image_button.setMinimumHeight(40)
+        self.open_image_button.clicked.connect(self._decode_from_file)
+        image_row.addWidget(self.open_image_button)
+        layout.addLayout(image_row)
+
+        # Show the decoded URL (or let the user paste one as a fallback).
         self.url_input = QLineEdit()
-        self.url_input.setPlaceholderText("https://s.team/q/1/12345678901234567890…")
+        self.url_input.setPlaceholderText("Decoded URL appears here — or paste one manually")
         self.url_input.setMinimumHeight(40)
         self.url_input.textChanged.connect(self._update_buttons)
         layout.addWidget(self.url_input)
-
-        paste_row = QHBoxLayout()
-        paste_row.setSpacing(8)
-        self.paste_button = QPushButton("Paste from Clipboard")
-        self.paste_button.clicked.connect(self._paste_from_clipboard)
-        paste_row.addWidget(self.paste_button)
-        paste_row.addStretch()
-        layout.addLayout(paste_row)
 
         self.status_label = QLabel("")
         self.status_label.setWordWrap(True)
         self.status_label.setVisible(False)
         layout.addWidget(self.status_label)
+
+        # If the optional deps are missing, say so upfront.
+        if not _qr_decoder_available():
+            self._show_status(
+                "QR image decoding needs extra packages. Install with: "
+                "pip install pyzbar Pillow",
+                error=True,
+            )
+            self.decode_clipboard_button.setEnabled(False)
+            self.open_image_button.setEnabled(False)
 
         # Action buttons
         button_row = QHBoxLayout()
@@ -147,17 +184,28 @@ class QrLoginDialog(QDialog):
                 color: {theme.TEXT_TERTIARY};
             }}
         """)
-        # Highlight the primary action.
-        self.approve_button.setStyleSheet(f"""
+        self.decode_clipboard_button.setStyleSheet(f"""
             QPushButton {{
                 background-color: {theme.ACCENT};
                 color: white;
                 border: none;
                 border-radius: 6px;
                 padding: 8px 16px;
-                min-width: 96px;
+                font-weight: 600;
             }}
             QPushButton:hover {{ background-color: {theme.ACCENT_HOVER}; }}
+            QPushButton:disabled {{ background-color: {theme.BORDER}; color: {theme.TEXT_TERTIARY}; }}
+        """)
+        self.approve_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {theme.SUCCESS};
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 16px;
+                min-width: 96px;
+            }}
+            QPushButton:hover {{ background-color: {theme.SUCCESS_HOVER}; }}
             QPushButton:disabled {{ background-color: {theme.BORDER}; color: {theme.TEXT_TERTIARY}; }}
         """)
         self.deny_button.setStyleSheet(f"""
@@ -177,30 +225,79 @@ class QrLoginDialog(QDialog):
         busy = self._worker is not None
         self.approve_button.setEnabled(has_url and not busy)
         self.deny_button.setEnabled(has_url and not busy)
-        self.paste_button.setEnabled(not busy)
         self.url_input.setEnabled(not busy)
+        if _qr_decoder_available():
+            self.decode_clipboard_button.setEnabled(not busy)
+            self.open_image_button.setEnabled(not busy)
 
-    def _paste_from_clipboard(self):
-        clipboard = QApplication.clipboard()
-        text = (clipboard.text() or '').strip()
-        if text:
-            self.url_input.setText(text)
+    # ── Image-based decoding ────────────────────────────────────────────
+
+    def _try_decode_clipboard_silent(self):
+        """On open, attempt a silent clipboard decode so the user can just click Approve."""
+        if not _qr_decoder_available():
             return
-
-        # Try decoding an image on the clipboard if the optional deps exist.
+        clipboard = QApplication.clipboard()
         image = clipboard.image()
         if image.isNull():
-            self._show_status("Clipboard is empty.", error=True)
             return
         decoded = self._decode_qr_from_qimage(image)
         if decoded:
             self.url_input.setText(decoded)
-        else:
+            self._show_status("QR decoded from clipboard image.", error=False)
+
+    def _decode_from_clipboard(self):
+        if not _qr_decoder_available():
             self._show_status(
-                "Couldn't read a QR code from the clipboard image. "
-                "Install pyzbar + Pillow, or paste the URL directly.",
+                "Install pyzbar + Pillow first: pip install pyzbar Pillow",
                 error=True,
             )
+            return
+        clipboard = QApplication.clipboard()
+        image = clipboard.image()
+        if image.isNull():
+            # No image on the clipboard — but maybe the user copied text this time.
+            text = (clipboard.text() or '').strip()
+            if text:
+                self.url_input.setText(text)
+                self._show_status("Loaded URL from clipboard text.", error=False)
+                return
+            self._show_status(
+                "Clipboard is empty. Copy a QR screenshot or URL first.",
+                error=True,
+            )
+            return
+
+        decoded = self._decode_qr_from_qimage(image)
+        if decoded:
+            self.url_input.setText(decoded)
+            self._show_status("QR decoded from clipboard image.", error=False)
+        else:
+            self._show_status(
+                "Couldn't find a QR code in the clipboard image.",
+                error=True,
+            )
+
+    def _decode_from_file(self):
+        if not _qr_decoder_available():
+            self._show_status(
+                "Install pyzbar + Pillow first: pip install pyzbar Pillow",
+                error=True,
+            )
+            return
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select QR Image",
+            "",
+            "Images (*.png *.jpg *.jpeg *.bmp *.gif *.webp)",
+        )
+        if not path:
+            return
+        decoded = self._decode_qr_from_path(path)
+        if decoded:
+            self.url_input.setText(decoded)
+            self._show_status("QR decoded from file.", error=False)
+        else:
+            self._show_status("Couldn't find a QR code in that image.", error=True)
 
     def _decode_qr_from_qimage(self, qimage) -> str | None:
         try:
@@ -216,14 +313,39 @@ class QrLoginDialog(QDialog):
             buf.seek(0)
             import io
             pil = Image.open(io.BytesIO(bytes(buf.data())))
-            results = decode(pil)
-            for r in results:
-                data = r.data.decode('utf-8', errors='ignore')
-                if data:
-                    return data
+            return self._decode_pil(pil)
+        except Exception:
+            return None
+
+    def _decode_qr_from_path(self, path: str) -> str | None:
+        try:
+            from PIL import Image  # type: ignore
+        except Exception:
+            return None
+        try:
+            with Image.open(path) as pil:
+                return self._decode_pil(pil)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _decode_pil(pil_image) -> str | None:
+        """Decode a PIL image, trying a grayscale pass if colour fails."""
+        try:
+            from pyzbar.pyzbar import decode  # type: ignore
+        except Exception:
+            return None
+        try:
+            for candidate in (pil_image, pil_image.convert('L')):
+                for result in decode(candidate):
+                    data = result.data.decode('utf-8', errors='ignore')
+                    if data:
+                        return data
         except Exception:
             return None
         return None
+
+    # ── Approve / Deny ──────────────────────────────────────────────────
 
     def _run(self, confirm: bool):
         url = self.url_input.text().strip()
