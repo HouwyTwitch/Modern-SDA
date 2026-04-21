@@ -130,6 +130,7 @@ class SteamAuthenticatorGUI(QMainWindow):
 
         # Connect search once here (not per account added)
         self.accounts_screen.search_input.textChanged.connect(self.filter_accounts)
+        self.accounts_screen.qr_login_requested.connect(self.show_qr_login_dialog)
 
         # Set initial screen
         self.switch_screen(0)
@@ -316,6 +317,27 @@ class SteamAuthenticatorGUI(QMainWindow):
             )
             widget.setVisible(should_show)
     
+    def show_qr_login_dialog(self):
+        """Open the QR login approval dialog for the selected account."""
+        if not self.selected_account:
+            MessageDialog.warning(
+                self,
+                "No Account Selected",
+                "Select an account first to approve a QR login.",
+            )
+            return
+        if not self.auth_manager.is_authenticated(self.selected_account.steam_id):
+            MessageDialog.warning(
+                self,
+                "Not Authenticated",
+                "This account isn't signed in yet. Wait for authentication to finish first.",
+            )
+            return
+
+        from src.ui.qr_login_dialog import QrLoginDialog
+        dialog = QrLoginDialog(self.auth_manager, self.selected_account, self)
+        dialog.exec_()
+
     def show_add_account_dialog(self):
         """Show the add account dialog"""
         dialog = AddAccountDialog(self)
