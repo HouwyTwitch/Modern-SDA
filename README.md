@@ -15,7 +15,12 @@ A modern PyQt5-based Steam Desktop Authenticator GUI.
 - **TOTP auth codes** — generates Steam Guard codes with a live countdown timer
 - **All confirmation types** — accepts any Steam confirmation: trades, market listings, Steam API key activations, and more
 - **Trade confirmations** — view, accept, and decline pending confirmations
+- **Accept All** — bulk-accept every pending confirmation at once (shown when 2+ are pending)
+- **Auto-confirm** — opt-in background auto-acceptance of trade offers and/or market listings
+- **Auto-refresh confirmations** — optional background polling for new pending confirmations
+- **Confirmation type badges** — visual indicators for Trade, Market, API key, and other types
 - **Session persistence** — stores refresh tokens so you don't re-login on every launch
+- **Remembers selection** — auto-selects the last-used account on launch
 - **Proxy support** — per-account HTTP proxy configuration (`http://user:pass@ip:port`)
 - **Themes** — built-in dark, light, and high-contrast themes with live switching
 - **Search** — filter accounts by name or Steam ID

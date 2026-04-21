@@ -1,4 +1,7 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea, QFrame, QCheckBox, QSpinBox
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea, QFrame,
+    QCheckBox, QSpinBox
+)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
@@ -6,9 +9,16 @@ from src.theme import ThemeManager, ThemedComboBox
 from src.settings import SettingsManager
 
 
+APP_VERSION = "1.1.0"
+
+
 class SettingsScreen(QWidget):
-    """Screen for application settings"""
-    
+    """Screen for application settings.
+
+    Reorganised to mirror the Android app's sectioned layout
+    (Appearance / Auth Code / Confirmations / About).
+    """
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_window = parent
@@ -16,91 +26,108 @@ class SettingsScreen(QWidget):
         self.auto_refresh_checkbox = None
         self.refresh_interval_spinbox = None
         self.copy_on_click_checkbox = None
+        self.auto_refresh_confirmations_checkbox = None
+        self.confirmations_interval_spinbox = None
+        self.auto_confirm_trades_checkbox = None
+        self.auto_confirm_market_checkbox = None
+        self._section_frames = []
+        self._section_title_labels = []
+        self._body_labels = []
         self.setup_ui()
-    
+
+    # ── Build UI ────────────────────────────────────────────────────────
+
     def setup_ui(self):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
-        
-        # Create scroll area
+
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         scroll_area.setStyleSheet("QScrollArea { border: none; background: transparent; }")
-        
-        # Scrollable content widget
+
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
         scroll_layout.setContentsMargins(20, 20, 20, 20)
-        scroll_layout.setSpacing(20)
-        
-        # Settings container (stored so update_combo_style can re-style it)
-        settings_container = QFrame()
-        self.settings_container = settings_container
-        settings_container.setStyleSheet(f"""
-            QFrame {{
-                background-color: {ThemeManager.get_current_theme().SURFACE_ELEVATED};
-                border-radius: 6px;
-                margin: 0px;
-            }}
-        """)
-        
-        settings_layout = QVBoxLayout(settings_container)
-        settings_layout.setContentsMargins(20, 20, 20, 20)
-        settings_layout.setSpacing(20)
-        
-        # Theme setting (original content)
-        theme_layout = QHBoxLayout()
-        
-        theme_label = QLabel("Theme:")
-        theme_label.setFont(QFont("Segoe UI", 14, QFont.Medium))
-        theme_label.setStyleSheet(f"color: {ThemeManager.get_current_theme().TEXT_PRIMARY};")
-        theme_layout.addWidget(theme_label)
-        
-        # Create new combo box if it doesn't exist
-        if not self.theme_combo:
-            self.theme_combo = ThemedComboBox()
-            self.theme_combo.addItems(ThemeManager.get_theme_names())
-            self.theme_combo.currentTextChanged.connect(self.on_theme_changed)
-            # Apply initial styling immediately
-            self.update_combo_style()
-        
-        # Update current selection
-        self.theme_combo.setCurrentText(ThemeManager.current_theme)
-        # Ensure styling is current
+        scroll_layout.setSpacing(16)
+
+        scroll_layout.addWidget(self._build_appearance_section())
+        scroll_layout.addWidget(self._build_auth_code_section())
+        scroll_layout.addWidget(self._build_confirmations_section())
+        scroll_layout.addWidget(self._build_about_section())
+        scroll_layout.addStretch()
+
+        scroll_area.setWidget(scroll_content)
+        main_layout.addWidget(scroll_area)
+
         self.update_combo_style()
-        
-        theme_layout.addWidget(self.theme_combo)
-        theme_layout.addStretch()
-        
-        settings_layout.addLayout(theme_layout)
+        self.update_control_styles()
 
-        auth_section_label = QLabel("Auth Code")
-        auth_section_label.setFont(QFont("Segoe UI", 12, QFont.Bold))
-        auth_section_label.setStyleSheet(
-            f"color: {ThemeManager.get_current_theme().TEXT_PRIMARY};"
-        )
-        settings_layout.addWidget(auth_section_label)
+    def _build_section_frame(self, title: str) -> tuple:
+        """Return (frame, body_layout) — body_layout is where the section
+        contents go. Frame/title are stored for theme updates."""
+        frame = QFrame()
+        frame.setObjectName("SettingsSection")
+        self._section_frames.append(frame)
 
-        auto_refresh_layout = QHBoxLayout()
-        self.auto_refresh_checkbox = QCheckBox("Auto-refresh code")
+        wrapper = QVBoxLayout(frame)
+        wrapper.setContentsMargins(20, 16, 20, 16)
+        wrapper.setSpacing(12)
+
+        title_label = QLabel(title)
+        title_label.setFont(QFont("Segoe UI", 12, QFont.Bold))
+        wrapper.addWidget(title_label)
+        self._section_title_labels.append(title_label)
+
+        body = QVBoxLayout()
+        body.setSpacing(10)
+        wrapper.addLayout(body)
+
+        return frame, body
+
+    def _add_row(self, body_layout, left_widget, right_widget=None):
+        row = QHBoxLayout()
+        row.addWidget(left_widget)
+        row.addStretch()
+        if right_widget is not None:
+            row.addWidget(right_widget)
+        body_layout.addLayout(row)
+
+    # ── Appearance ──────────────────────────────────────────────────────
+
+    def _build_appearance_section(self) -> QFrame:
+        frame, body = self._build_section_frame("Appearance")
+
+        theme_label = QLabel("Theme")
+        theme_label.setFont(QFont("Segoe UI", 13))
+        self._body_labels.append(theme_label)
+
+        self.theme_combo = ThemedComboBox()
+        self.theme_combo.addItems(ThemeManager.get_theme_names())
+        self.theme_combo.setCurrentText(ThemeManager.current_theme)
+        self.theme_combo.currentTextChanged.connect(self.on_theme_changed)
+
+        self._add_row(body, theme_label, self.theme_combo)
+
+        return frame
+
+    # ── Auth Code ───────────────────────────────────────────────────────
+
+    def _build_auth_code_section(self) -> QFrame:
+        frame, body = self._build_section_frame("Auth Code")
+
+        self.auto_refresh_checkbox = QCheckBox("Auto-refresh displayed code")
         self.auto_refresh_checkbox.setChecked(
             SettingsManager.get_setting("auto_refresh_enabled")
         )
         self.auto_refresh_checkbox.stateChanged.connect(self.on_auto_refresh_changed)
-        auto_refresh_layout.addWidget(self.auto_refresh_checkbox)
-        auto_refresh_layout.addStretch()
-        settings_layout.addLayout(auto_refresh_layout)
+        body.addWidget(self.auto_refresh_checkbox)
 
-        refresh_interval_layout = QHBoxLayout()
-        refresh_interval_label = QLabel("Refresh interval (seconds):")
-        refresh_interval_label.setFont(QFont("Segoe UI", 12))
-        refresh_interval_label.setStyleSheet(
-            f"color: {ThemeManager.get_current_theme().TEXT_SECONDARY};"
-        )
-        refresh_interval_layout.addWidget(refresh_interval_label)
+        interval_label = QLabel("Refresh interval")
+        interval_label.setFont(QFont("Segoe UI", 12))
+        self._body_labels.append(interval_label)
 
         self.refresh_interval_spinbox = QSpinBox()
         self.refresh_interval_spinbox.setRange(1, 60)
@@ -108,55 +135,125 @@ class SettingsScreen(QWidget):
             SettingsManager.get_setting("auto_refresh_interval_seconds")
         )
         self.refresh_interval_spinbox.setSuffix(" sec")
-        self.refresh_interval_spinbox.valueChanged.connect(
-            self.on_refresh_interval_changed
-        )
-        refresh_interval_layout.addWidget(self.refresh_interval_spinbox)
-        refresh_interval_layout.addStretch()
-        settings_layout.addLayout(refresh_interval_layout)
-
-        copy_layout = QHBoxLayout()
-        self.copy_on_click_checkbox = QCheckBox("Click code to copy")
-        self.copy_on_click_checkbox.setChecked(
-            SettingsManager.get_setting("copy_code_on_click")
-        )
-        self.copy_on_click_checkbox.stateChanged.connect(
-            self.on_copy_on_click_changed
-        )
-        copy_layout.addWidget(self.copy_on_click_checkbox)
-        copy_layout.addStretch()
-        settings_layout.addLayout(copy_layout)
-
+        self.refresh_interval_spinbox.valueChanged.connect(self.on_refresh_interval_changed)
         self.refresh_interval_spinbox.setEnabled(
             SettingsManager.get_setting("auto_refresh_enabled")
         )
-        self.update_control_styles()
-        
-        # Add the settings container to scroll layout
-        scroll_layout.addWidget(settings_container)
-        scroll_layout.addStretch()
-        
-        # Set the scroll content
-        scroll_area.setWidget(scroll_content)
-        main_layout.addWidget(scroll_area)
 
-    
+        self._add_row(body, interval_label, self.refresh_interval_spinbox)
+
+        self.copy_on_click_checkbox = QCheckBox("Click code to copy to clipboard")
+        self.copy_on_click_checkbox.setChecked(
+            SettingsManager.get_setting("copy_code_on_click")
+        )
+        self.copy_on_click_checkbox.stateChanged.connect(self.on_copy_on_click_changed)
+        body.addWidget(self.copy_on_click_checkbox)
+
+        return frame
+
+    # ── Confirmations ───────────────────────────────────────────────────
+
+    def _build_confirmations_section(self) -> QFrame:
+        frame, body = self._build_section_frame("Confirmations")
+
+        self.auto_refresh_confirmations_checkbox = QCheckBox(
+            "Auto-refresh pending confirmations in background"
+        )
+        self.auto_refresh_confirmations_checkbox.setChecked(
+            SettingsManager.get_setting("auto_refresh_confirmations_enabled")
+        )
+        self.auto_refresh_confirmations_checkbox.stateChanged.connect(
+            self.on_auto_refresh_confirmations_changed
+        )
+        body.addWidget(self.auto_refresh_confirmations_checkbox)
+
+        sync_label = QLabel("Background refresh interval")
+        sync_label.setFont(QFont("Segoe UI", 12))
+        self._body_labels.append(sync_label)
+
+        self.confirmations_interval_spinbox = QSpinBox()
+        self.confirmations_interval_spinbox.setRange(15, 600)
+        self.confirmations_interval_spinbox.setSingleStep(15)
+        self.confirmations_interval_spinbox.setValue(
+            SettingsManager.get_setting("auto_refresh_confirmations_interval_seconds")
+        )
+        self.confirmations_interval_spinbox.setSuffix(" sec")
+        self.confirmations_interval_spinbox.valueChanged.connect(
+            self.on_confirmations_interval_changed
+        )
+        self.confirmations_interval_spinbox.setEnabled(
+            SettingsManager.get_setting("auto_refresh_confirmations_enabled")
+        )
+        self._add_row(body, sync_label, self.confirmations_interval_spinbox)
+
+        warn_label = QLabel("Auto-accept (use with caution — confirmations run automatically)")
+        warn_label.setFont(QFont("Segoe UI", 10))
+        warn_label.setWordWrap(True)
+        self._body_labels.append(warn_label)
+        body.addWidget(warn_label)
+
+        self.auto_confirm_trades_checkbox = QCheckBox("Auto-accept trade offers")
+        self.auto_confirm_trades_checkbox.setChecked(
+            SettingsManager.get_setting("auto_confirm_trades")
+        )
+        self.auto_confirm_trades_checkbox.stateChanged.connect(
+            self.on_auto_confirm_trades_changed
+        )
+        body.addWidget(self.auto_confirm_trades_checkbox)
+
+        self.auto_confirm_market_checkbox = QCheckBox("Auto-accept market listings")
+        self.auto_confirm_market_checkbox.setChecked(
+            SettingsManager.get_setting("auto_confirm_market")
+        )
+        self.auto_confirm_market_checkbox.stateChanged.connect(
+            self.on_auto_confirm_market_changed
+        )
+        body.addWidget(self.auto_confirm_market_checkbox)
+
+        return frame
+
+    # ── About ───────────────────────────────────────────────────────────
+
+    def _build_about_section(self) -> QFrame:
+        frame, body = self._build_section_frame("About")
+
+        version_label = QLabel(f"Modern SDA {APP_VERSION}")
+        version_label.setFont(QFont("Segoe UI", 13, QFont.Medium))
+        self._body_labels.append(version_label)
+        body.addWidget(version_label)
+
+        desc_label = QLabel(
+            "A modern Steam Desktop Authenticator.\n"
+            "Feature parity ported from the Android companion app."
+        )
+        desc_label.setFont(QFont("Segoe UI", 10))
+        desc_label.setWordWrap(True)
+        self._body_labels.append(desc_label)
+        body.addWidget(desc_label)
+
+        return frame
+
+    # ── Theming ─────────────────────────────────────────────────────────
+
     def update_combo_style(self):
         """Update combo box styling and all dynamic elements with current theme."""
         current_theme = ThemeManager.get_current_theme()
 
-        # Re-style the settings card (stored during setup_ui)
-        if hasattr(self, 'settings_container') and self.settings_container:
-            self.settings_container.setStyleSheet(f"""
-                QFrame {{
+        # Section frames
+        for frame in self._section_frames:
+            frame.setStyleSheet(f"""
+                QFrame#SettingsSection {{
                     background-color: {current_theme.SURFACE_ELEVATED};
-                    border-radius: 6px;
-                    margin: 0px;
+                    border-radius: 8px;
+                    border: 1px solid {current_theme.BORDER};
                 }}
             """)
+        for label in self._section_title_labels:
+            label.setStyleSheet(f"color: {current_theme.TEXT_PRIMARY}; background: transparent; border: none;")
+        for label in self._body_labels:
+            label.setStyleSheet(f"color: {current_theme.TEXT_SECONDARY}; background: transparent; border: none;")
 
         if self.theme_combo:
-            current_theme = ThemeManager.get_current_theme()
             style = f"""
                 QComboBox {{
                     background-color: {current_theme.SURFACE};
@@ -210,8 +307,6 @@ class SettingsScreen(QWidget):
                     color: {current_theme.TEXT_PRIMARY};
                 }}
             """
-            
-            # Use our custom method that properly handles the dropdown view
             if hasattr(self.theme_combo, 'setThemedStyleSheet'):
                 self.theme_combo.setThemedStyleSheet(style)
             else:
@@ -219,23 +314,26 @@ class SettingsScreen(QWidget):
         self.update_control_styles()
 
     def update_control_styles(self):
-        """Update styles for additional settings controls."""
         current_theme = ThemeManager.get_current_theme()
         checkbox_style = f"""
             QCheckBox {{
                 color: {current_theme.TEXT_PRIMARY};
-                font-size: 14px;
+                font-size: 13px;
+                background: transparent;
             }}
             QCheckBox::indicator {{
                 width: 18px;
                 height: 18px;
                 border-radius: 4px;
                 border: 2px solid {current_theme.BORDER};
-                background-color: {current_theme.SURFACE_ELEVATED};
+                background-color: {current_theme.SURFACE};
             }}
             QCheckBox::indicator:checked {{
                 background-color: {current_theme.ACCENT};
                 border-color: {current_theme.BORDER_FOCUS};
+            }}
+            QCheckBox:disabled {{
+                color: {current_theme.TEXT_TERTIARY};
             }}
         """
         spinbox_style = f"""
@@ -250,39 +348,65 @@ class SettingsScreen(QWidget):
             QSpinBox:focus {{
                 border-color: {current_theme.BORDER_FOCUS};
             }}
+            QSpinBox:disabled {{
+                color: {current_theme.TEXT_TERTIARY};
+            }}
         """
-        if self.auto_refresh_checkbox:
-            self.auto_refresh_checkbox.setStyleSheet(checkbox_style)
-        if self.copy_on_click_checkbox:
-            self.copy_on_click_checkbox.setStyleSheet(checkbox_style)
-        if self.refresh_interval_spinbox:
-            self.refresh_interval_spinbox.setStyleSheet(spinbox_style)
-    
+        for cb in (
+            self.auto_refresh_checkbox,
+            self.copy_on_click_checkbox,
+            self.auto_refresh_confirmations_checkbox,
+            self.auto_confirm_trades_checkbox,
+            self.auto_confirm_market_checkbox,
+        ):
+            if cb:
+                cb.setStyleSheet(checkbox_style)
+        for sb in (self.refresh_interval_spinbox, self.confirmations_interval_spinbox):
+            if sb:
+                sb.setStyleSheet(spinbox_style)
+
+    # ── Handlers ────────────────────────────────────────────────────────
+
     def on_theme_changed(self, theme_name: str):
-        """Handle theme change"""
         if ThemeManager.set_theme(theme_name):
             SettingsManager.set_setting("theme", theme_name)
-            # Update the entire application with new theme
             if self.parent_window:
                 self.parent_window.apply_theme()
 
     def on_auto_refresh_changed(self, state: int):
-        """Toggle auto-refresh setting."""
         enabled = state == Qt.Checked
         SettingsManager.set_setting("auto_refresh_enabled", enabled)
         if self.refresh_interval_spinbox:
             self.refresh_interval_spinbox.setEnabled(enabled)
-        if self.parent_window and hasattr(self.parent_window, "apply_settings"):
-            self.parent_window.apply_settings()
+        self._notify_parent_settings_changed()
 
     def on_refresh_interval_changed(self, value: int):
-        """Update refresh interval setting."""
         SettingsManager.set_setting("auto_refresh_interval_seconds", value)
-        if self.parent_window and hasattr(self.parent_window, "apply_settings"):
-            self.parent_window.apply_settings()
+        self._notify_parent_settings_changed()
 
     def on_copy_on_click_changed(self, state: int):
-        """Toggle copy-on-click setting."""
         SettingsManager.set_setting("copy_code_on_click", state == Qt.Checked)
+        self._notify_parent_settings_changed()
+
+    def on_auto_refresh_confirmations_changed(self, state: int):
+        enabled = state == Qt.Checked
+        SettingsManager.set_setting("auto_refresh_confirmations_enabled", enabled)
+        if self.confirmations_interval_spinbox:
+            self.confirmations_interval_spinbox.setEnabled(enabled)
+        self._notify_parent_settings_changed()
+
+    def on_confirmations_interval_changed(self, value: int):
+        SettingsManager.set_setting("auto_refresh_confirmations_interval_seconds", value)
+        self._notify_parent_settings_changed()
+
+    def on_auto_confirm_trades_changed(self, state: int):
+        SettingsManager.set_setting("auto_confirm_trades", state == Qt.Checked)
+        self._notify_parent_settings_changed()
+
+    def on_auto_confirm_market_changed(self, state: int):
+        SettingsManager.set_setting("auto_confirm_market", state == Qt.Checked)
+        self._notify_parent_settings_changed()
+
+    def _notify_parent_settings_changed(self):
         if self.parent_window and hasattr(self.parent_window, "apply_settings"):
             self.parent_window.apply_settings()

@@ -1,9 +1,9 @@
 import time
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QScrollArea, QProgressBar, QApplication
+    QScrollArea, QProgressBar, QApplication, QGraphicsOpacityEffect
 )
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QFont
 
 from src.account_manager import AccountData
@@ -44,6 +44,13 @@ class AccountsScreen(QWidget):
         self.title_label.setCursor(Qt.PointingHandCursor)
         self.title_label.setToolTip("Click to copy code")
         self.title_label.mousePressEvent = self.on_code_clicked
+        # Opacity effect used for the fade-in animation when the code changes
+        # (ported from the Android code-rotation animation).
+        self._code_opacity = QGraphicsOpacityEffect(self.title_label)
+        self._code_opacity.setOpacity(1.0)
+        self.title_label.setGraphicsEffect(self._code_opacity)
+        self._code_animation = None
+        self._last_code_text = "SDA"
         header_layout.addWidget(self.title_label)
 
         # Account name / status subtitle
@@ -199,7 +206,32 @@ class AccountsScreen(QWidget):
     def refresh_auth_code(self):
         if self.selected_account and self.parent_window:
             code = self.parent_window.auth_manager.generate_auth_code(self.selected_account)
-            self.title_label.setText(code)
+            self.set_code(code)
+
+    def set_code(self, code: str):
+        """Set the TOTP code label with a short fade-in animation on change.
+
+        Ported from the Android app's slide/fade transition on code updates.
+        """
+        if self.title_label.text() == code:
+            return
+        self.title_label.setText(code)
+        # Only animate when the value looks like a real code (not placeholder).
+        if code in ("SDA", "...", "Copied!"):
+            self._code_opacity.setOpacity(1.0)
+            return
+        try:
+            if self._code_animation is not None:
+                self._code_animation.stop()
+            anim = QPropertyAnimation(self._code_opacity, b"opacity", self)
+            anim.setDuration(260)
+            anim.setStartValue(0.25)
+            anim.setEndValue(1.0)
+            anim.setEasingCurve(QEasingCurve.OutCubic)
+            anim.start()
+            self._code_animation = anim
+        except Exception:
+            self._code_opacity.setOpacity(1.0)
 
     def set_selected_account(self, account):
         """Set the selected account and manage timers/progress bar."""

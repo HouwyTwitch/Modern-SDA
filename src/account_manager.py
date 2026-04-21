@@ -748,6 +748,47 @@ class ConfirmationManager(QObject):
         """Get cached confirmations for account"""
         return self._confirmation_cache.get(steam_id, [])
 
+    async def accept_all_confirmations(
+        self,
+        steam_id: str,
+        auth_manager: 'AuthenticationManager',
+        type_filter: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Accept every cached confirmation for the account.
+
+        Ported from the Android app's "Accept All" action. Runs sequentially so
+        aiosteampy's internal rate limiting still applies. ``type_filter``
+        restricts the action to a specific confirmation type (e.g. ``"TRADE"``
+        or ``"MARKET"``) when provided — used by auto-confirm.
+        """
+        if steam_id not in auth_manager._steam_clients:
+            return {'success': False, 'error': 'Account not authenticated'}
+
+        pending = list(self._confirmation_cache.get(steam_id, []))
+        if type_filter:
+            filter_upper = type_filter.upper()
+            pending = [c for c in pending if str(c.get('type', '')).upper() == filter_upper
+                       or (filter_upper == 'MARKET' and str(c.get('type', '')).upper() == 'LISTING')]
+
+        accepted_ids: List[str] = []
+        failed: List[Dict[str, Any]] = []
+        for conf in pending:
+            try:
+                result = await self.accept_confirmation(steam_id, str(conf['id']), auth_manager)
+                if result.get('success'):
+                    accepted_ids.append(str(conf['id']))
+                else:
+                    failed.append({'id': str(conf['id']), 'error': result.get('error', 'Unknown')})
+            except Exception as e:
+                failed.append({'id': str(conf['id']), 'error': str(e)})
+
+        return {
+            'success': True,
+            'accepted': accepted_ids,
+            'failed': failed,
+            'total': len(pending),
+        }
+
 # Utility functions for integration
 def create_account_managers():
     """Create and return account management instances"""

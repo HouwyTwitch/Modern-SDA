@@ -287,6 +287,8 @@ class SteamAuthenticatorGUI(QMainWindow):
         """Apply non-theme settings to relevant screens."""
         if hasattr(self, 'accounts_screen') and self.accounts_screen:
             self.accounts_screen.apply_settings()
+        if hasattr(self, 'confirmations_screen') and self.confirmations_screen:
+            self.confirmations_screen.apply_settings()
     
     def position_floating_button(self):
         """Position the floating add button"""
@@ -350,6 +352,21 @@ class SteamAuthenticatorGUI(QMainWindow):
         if hasattr(self, 'accounts_screen') and self.accounts_screen is not None:
             for account in self.account_manager.get_all_accounts():
                 self.on_account_added(account)
+
+        # Auto-select the last-used account across launches (ported from Android).
+        last_id = SettingsManager.get_setting("last_selected_steam_id") or ""
+        target_widget = None
+        if last_id:
+            for widget in self.account_widgets:
+                if str(widget.account.steam_id) == str(last_id):
+                    target_widget = widget
+                    break
+        if target_widget is None and self.account_widgets:
+            # Fall back to the first available account, matching Android's behaviour.
+            target_widget = self.account_widgets[0]
+
+        if target_widget is not None:
+            QTimer.singleShot(0, lambda w=target_widget: self.on_account_selected(w))
     
     def on_account_added(self, account: AccountData):
         """Handle account added signal"""
@@ -418,17 +435,19 @@ class SteamAuthenticatorGUI(QMainWindow):
         """Handle account selection with automatic authentication"""
         # Store the previously selected account
         self.previous_selected_account = self.selected_account
-        
+
         # Deselect all other accounts
         for widget in self.account_widgets:
             widget.set_selected(False)
-        
+
         # Select the clicked account
         selected_widget.set_selected(True)
         selected_account = selected_widget.account
-        
+
         # Store selected account reference in main window for global access
         self.selected_account = selected_account
+        # Persist the selection so the app auto-selects it on next launch.
+        SettingsManager.set_setting("last_selected_steam_id", str(selected_account.steam_id))
         
         # Update accounts screen with selected account
         self.accounts_screen.set_selected_account(selected_account)
@@ -448,7 +467,7 @@ class SteamAuthenticatorGUI(QMainWindow):
         else:
             # Generate a code immediately
             code = self.auth_manager.generate_auth_code(selected_account)
-            self.accounts_screen.title_label.setText(code)
+            self.accounts_screen.set_code(code)
             # Only notify confirmations screen when we already have a valid session
             if hasattr(self, 'confirmations_screen'):
                 self.confirmations_screen.on_account_selected(selected_account)
@@ -504,7 +523,7 @@ class SteamAuthenticatorGUI(QMainWindow):
 
             # Update code label immediately
             code = self.auth_manager.generate_auth_code(account)
-            self.accounts_screen.title_label.setText(code)
+            self.accounts_screen.set_code(code)
 
             # If confirmations screen is present, refresh confirmations for this account
             if hasattr(self, 'confirmations_screen') and self.selected_account and self.selected_account.steam_id == account.steam_id:
@@ -546,9 +565,9 @@ class SteamAuthenticatorGUI(QMainWindow):
     def on_code_generated(self, steam_id: str, code: str):
         """Handle code generated signal"""
         # Update the UI with the new code if this is the selected account
-        if (self.selected_account and 
+        if (self.selected_account and
             self.selected_account.steam_id == steam_id):
-            self.accounts_screen.title_label.setText(code)
+            self.accounts_screen.set_code(code)
     
     def on_session_refreshed(self, steam_id: str, success: bool):
         pass
