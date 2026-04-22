@@ -1,9 +1,10 @@
 import time
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QScrollArea, QProgressBar, QApplication
+    QScrollArea, QProgressBar, QApplication, QGraphicsOpacityEffect,
+    QPushButton
 )
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QFont
 
 from src.account_manager import AccountData
@@ -16,6 +17,8 @@ class AccountsScreen(QWidget):
 
     # Signal for when the auth code label is clicked
     code_clicked = pyqtSignal(str)
+    # Signal emitted when the user taps the QR-login entry button
+    qr_login_requested = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -44,6 +47,13 @@ class AccountsScreen(QWidget):
         self.title_label.setCursor(Qt.PointingHandCursor)
         self.title_label.setToolTip("Click to copy code")
         self.title_label.mousePressEvent = self.on_code_clicked
+        # Opacity effect used for the fade-in animation when the code changes
+        # (ported from the Android code-rotation animation).
+        self._code_opacity = QGraphicsOpacityEffect(self.title_label)
+        self._code_opacity.setOpacity(1.0)
+        self.title_label.setGraphicsEffect(self._code_opacity)
+        self._code_animation = None
+        self._last_code_text = "SDA"
         header_layout.addWidget(self.title_label)
 
         # Account name / status subtitle
@@ -63,11 +73,24 @@ class AccountsScreen(QWidget):
         self.code_timer_bar.setVisible(False)
         layout.addWidget(self.code_timer_bar)
 
-        # ── Search bar ───────────────────────────────────────────────────
+        # ── Search bar + QR login button ────────────────────────────────
+        search_row = QHBoxLayout()
+        search_row.setSpacing(8)
+        search_row.setContentsMargins(0, 0, 0, 0)
+
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Search by account name or Steam ID…")
         self.search_input.setMinimumHeight(48)
-        layout.addWidget(self.search_input)
+        search_row.addWidget(self.search_input, 1)
+
+        self.qr_login_button = QPushButton("QR Login")
+        self.qr_login_button.setMinimumHeight(48)
+        self.qr_login_button.setEnabled(False)
+        self.qr_login_button.setToolTip("Approve a Steam QR sign-in request")
+        self.qr_login_button.clicked.connect(self.qr_login_requested.emit)
+        search_row.addWidget(self.qr_login_button)
+
+        layout.addLayout(search_row)
 
         # ── Accounts scroll area ─────────────────────────────────────────
         self.scroll_area = QScrollArea()
@@ -93,6 +116,7 @@ class AccountsScreen(QWidget):
         # Apply initial styles
         self._apply_label_styles()
         self._apply_search_style()
+        self._apply_qr_button_style()
 
         # Start the code-expiry countdown timer (always ticking)
         self._start_code_timer()
@@ -199,11 +223,37 @@ class AccountsScreen(QWidget):
     def refresh_auth_code(self):
         if self.selected_account and self.parent_window:
             code = self.parent_window.auth_manager.generate_auth_code(self.selected_account)
-            self.title_label.setText(code)
+            self.set_code(code)
+
+    def set_code(self, code: str):
+        """Set the TOTP code label with a short fade-in animation on change.
+
+        Ported from the Android app's slide/fade transition on code updates.
+        """
+        if self.title_label.text() == code:
+            return
+        self.title_label.setText(code)
+        # Only animate when the value looks like a real code (not placeholder).
+        if code in ("SDA", "...", "Copied!"):
+            self._code_opacity.setOpacity(1.0)
+            return
+        try:
+            if self._code_animation is not None:
+                self._code_animation.stop()
+            anim = QPropertyAnimation(self._code_opacity, b"opacity", self)
+            anim.setDuration(260)
+            anim.setStartValue(0.25)
+            anim.setEndValue(1.0)
+            anim.setEasingCurve(QEasingCurve.OutCubic)
+            anim.start()
+            self._code_animation = anim
+        except Exception:
+            self._code_opacity.setOpacity(1.0)
 
     def set_selected_account(self, account):
         """Set the selected account and manage timers/progress bar."""
         self.selected_account = account
+        self.qr_login_button.setEnabled(account is not None)
         if account:
             self.code_timer_bar.setVisible(True)
             self._tick_code_timer()
@@ -233,6 +283,7 @@ class AccountsScreen(QWidget):
         """Re-apply theme colours to all dynamically-styled elements."""
         self._apply_label_styles()
         self._apply_search_style()
+        self._apply_qr_button_style()
         self._tick_code_timer()
         # Rebuild empty state labels with new theme colours
         current_theme = ThemeManager.get_current_theme()
@@ -253,6 +304,28 @@ class AccountsScreen(QWidget):
         self.subtitle_label.setStyleSheet(
             f"color: {current_theme.TEXT_SECONDARY}; background: transparent;"
         )
+
+    def _apply_qr_button_style(self):
+        current_theme = ThemeManager.get_current_theme()
+        self.qr_login_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {current_theme.SURFACE};
+                color: {current_theme.TEXT_PRIMARY};
+                border: 2px solid {current_theme.BORDER};
+                border-radius: 8px;
+                padding: 0 14px;
+                font-size: 13px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {current_theme.SURFACE_HOVER};
+                border-color: {current_theme.BORDER_FOCUS};
+            }}
+            QPushButton:disabled {{
+                color: {current_theme.TEXT_TERTIARY};
+                border-color: {current_theme.BORDER};
+            }}
+        """)
 
     def _apply_search_style(self):
         current_theme = ThemeManager.get_current_theme()

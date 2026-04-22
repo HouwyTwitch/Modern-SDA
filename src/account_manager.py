@@ -492,6 +492,143 @@ class AuthenticationManager(QObject):
         """Check if account is authenticated"""
         # Consider presence of an active client as authenticated
         return str(steam_id) in self._steam_clients
+
+    @staticmethod
+    def _extract_qr_client_id(url: str) -> Optional[int]:
+        """Extract the client_id number from a Steam QR challenge URL.
+
+        Mirrors the four regex patterns used by the Android ``QrLoginService``:
+        query-string ``client_id``/``clientid``, delimited ``client_id:``,
+        ``/q/<ver>/<id>`` short URLs, and ``/qr/<id>`` legacy URLs.
+        """
+        import re
+        from urllib.parse import unquote
+        try:
+            decoded = unquote(url)
+        except Exception:
+            decoded = url
+        patterns = (
+            r'[?&](?:client_id|clientid)=([0-9]{5,})',
+            r'(?:client_id|clientid)[:=]([0-9]{5,})',
+            r'/q/\d+/([0-9]{5,})(?:[/?#]|$)',
+            r'/qr/([0-9]{5,})(?:[/?#]|$)',
+        )
+        for pattern in patterns:
+            m = re.search(pattern, decoded, re.IGNORECASE)
+            if m:
+                try:
+                    return int(m.group(1))
+                except (ValueError, TypeError):
+                    continue
+        return None
+
+    async def approve_qr_login(
+        self, account: AccountData, challenge_url: str, confirm: bool = True
+    ) -> Dict[str, Any]:
+        """Approve (or deny) a Steam QR-code login challenge.
+
+        Ported from the Android app's ``QrLoginService.approveAuthSession``:
+        extract client_id from the scanned URL, sign it with HMAC-SHA256 using
+        the account's ``shared_secret`` over an 18-byte little-endian payload
+        (version + client_id + steamid), then POST the form to
+        ``IAuthenticationService/UpdateAuthSessionWithMobileConfirmation/v1``.
+        """
+        import base64
+        import hmac
+        import hashlib
+
+        try:
+            client_id = self._extract_qr_client_id(challenge_url)
+            if client_id is None:
+                return {'success': False, 'error': 'Could not find client_id in URL'}
+
+            steam_id_str = str(account.steam_id)
+            client = self._steam_clients.get(steam_id_str)
+            access_token = (getattr(client, 'access_token', '') if client else '') or account.access_token
+            if not access_token:
+                return {'success': False, 'error': 'Account not authenticated'}
+
+            # shared_secret lives in the mafile (same source used for TOTP codes).
+            try:
+                with open(account.mafile_path, 'r', encoding='utf-8') as f:
+                    mafile_data = json.load(f)
+            except Exception as e:
+                return {'success': False, 'error': f'Failed to read mafile: {e}'}
+
+            shared_secret = mafile_data.get('shared_secret', '')
+            if not shared_secret:
+                return {'success': False, 'error': 'Missing shared_secret in mafile'}
+
+            try:
+                secret = base64.b64decode(shared_secret)
+            except Exception:
+                return {'success': False, 'error': 'Invalid shared_secret encoding'}
+
+            try:
+                steam_id_int = int(steam_id_str)
+            except ValueError:
+                return {'success': False, 'error': 'Invalid steam_id'}
+
+            # Little-endian: 2-byte version (=1) + 8-byte client_id + 8-byte steamid
+            payload = (
+                (1).to_bytes(2, 'little')
+                + client_id.to_bytes(8, 'little')
+                + steam_id_int.to_bytes(8, 'little')
+            )
+            signature = hmac.new(secret, payload, hashlib.sha256).digest()
+            signature_b64 = base64.b64encode(signature).decode('ascii')
+
+            url = (
+                'https://api.steampowered.com/IAuthenticationService/'
+                'UpdateAuthSessionWithMobileConfirmation/v1'
+                f'?access_token={access_token}'
+            )
+            form = {
+                'version': '1',
+                'client_id': str(client_id),
+                'steamid': str(steam_id_int),
+                'signature': signature_b64,
+                'confirm': 'true' if confirm else 'false',
+                'persistence': '1',
+            }
+
+            from aiohttp import ClientSession
+            proxy_url = account.proxy or None
+            # Use a dedicated session (no raise_for_status) so we can inspect
+            # Steam's own JSON error responses rather than raising on 4xx.
+            async with ClientSession() as session:
+                kwargs = {'data': form}
+                if proxy_url:
+                    kwargs['proxy'] = proxy_url
+                async with session.post(url, **kwargs) as resp:
+                    text = await resp.text()
+                    status = resp.status
+
+            body: Dict[str, Any] = {}
+            if text:
+                try:
+                    parsed = json.loads(text)
+                    if isinstance(parsed, dict):
+                        body = parsed
+                except Exception:
+                    pass
+
+            inner = body.get('response') if isinstance(body.get('response'), dict) else body
+            if isinstance(inner, dict) and inner.get('success') is False:
+                return {
+                    'success': False,
+                    'error': inner.get('message') or 'Steam rejected QR approval',
+                }
+            if status >= 400:
+                return {
+                    'success': False,
+                    'error': f'Steam returned HTTP {status}',
+                }
+
+            return {'success': True, 'confirmed': confirm, 'client_id': client_id}
+
+        except Exception as e:
+            return {'success': False, 'error': f'QR login failed: {str(e)}'}
     
     def _start_code_timer(self, steam_id: str, client):
         """Start timer for periodic code generation"""
@@ -747,6 +884,47 @@ class ConfirmationManager(QObject):
     def get_cached_confirmations(self, steam_id: str) -> List[Dict[str, Any]]:
         """Get cached confirmations for account"""
         return self._confirmation_cache.get(steam_id, [])
+
+    async def accept_all_confirmations(
+        self,
+        steam_id: str,
+        auth_manager: 'AuthenticationManager',
+        type_filter: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Accept every cached confirmation for the account.
+
+        Ported from the Android app's "Accept All" action. Runs sequentially so
+        aiosteampy's internal rate limiting still applies. ``type_filter``
+        restricts the action to a specific confirmation type (e.g. ``"TRADE"``
+        or ``"MARKET"``) when provided — used by auto-confirm.
+        """
+        if steam_id not in auth_manager._steam_clients:
+            return {'success': False, 'error': 'Account not authenticated'}
+
+        pending = list(self._confirmation_cache.get(steam_id, []))
+        if type_filter:
+            filter_upper = type_filter.upper()
+            pending = [c for c in pending if str(c.get('type', '')).upper() == filter_upper
+                       or (filter_upper == 'MARKET' and str(c.get('type', '')).upper() == 'LISTING')]
+
+        accepted_ids: List[str] = []
+        failed: List[Dict[str, Any]] = []
+        for conf in pending:
+            try:
+                result = await self.accept_confirmation(steam_id, str(conf['id']), auth_manager)
+                if result.get('success'):
+                    accepted_ids.append(str(conf['id']))
+                else:
+                    failed.append({'id': str(conf['id']), 'error': result.get('error', 'Unknown')})
+            except Exception as e:
+                failed.append({'id': str(conf['id']), 'error': str(e)})
+
+        return {
+            'success': True,
+            'accepted': accepted_ids,
+            'failed': failed,
+            'total': len(pending),
+        }
 
 # Utility functions for integration
 def create_account_managers():

@@ -13,9 +13,15 @@ A modern PyQt5-based Steam Desktop Authenticator GUI.
 
 - **Multiple accounts** — add and manage as many Steam accounts as you need
 - **TOTP auth codes** — generates Steam Guard codes with a live countdown timer
+- **QR login approval** — copy a screenshot of Steam's "Sign in on computer" QR code and approve (or deny) the sign-in directly from this app
 - **All confirmation types** — accepts any Steam confirmation: trades, market listings, Steam API key activations, and more
 - **Trade confirmations** — view, accept, and decline pending confirmations
+- **Accept All** — bulk-accept every pending confirmation at once (shown when 2+ are pending)
+- **Auto-confirm** — opt-in background auto-acceptance of trade offers and/or market listings
+- **Auto-refresh confirmations** — optional background polling for new pending confirmations
+- **Confirmation type badges** — visual indicators for Trade, Market, API key, and other types
 - **Session persistence** — stores refresh tokens so you don't re-login on every launch
+- **Remembers selection** — auto-selects the last-used account on launch
 - **Proxy support** — per-account HTTP proxy configuration (`http://user:pass@ip:port`)
 - **Themes** — built-in dark, light, and high-contrast themes with live switching
 - **Search** — filter accounts by name or Steam ID
@@ -26,11 +32,12 @@ A modern PyQt5-based Steam Desktop Authenticator GUI.
 - [PyQt5](https://pypi.org/project/PyQt5/)
 - [aiosteampy](https://github.com/somespecialone/aiosteampy)
 - [aiohttp](https://pypi.org/project/aiohttp/)
+- [pyzbar](https://pypi.org/project/pyzbar/) + [Pillow](https://pypi.org/project/Pillow/) — for QR login image decoding
 
 Install dependencies:
 
 ```bash
-pip install PyQt5 aiosteampy aiohttp
+pip install PyQt5 aiosteampy aiohttp pyzbar Pillow
 ```
 
 ## Usage

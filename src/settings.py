@@ -15,6 +15,14 @@ class SettingsManager:
         "auto_refresh_enabled": True,
         "auto_refresh_interval_seconds": 1,
         "copy_code_on_click": True,
+        # Background confirmation polling (ported from Android)
+        "auto_refresh_confirmations_enabled": False,
+        "auto_refresh_confirmations_interval_seconds": 60,
+        # Auto-confirm (dangerous — off by default)
+        "auto_confirm_trades": False,
+        "auto_confirm_market": False,
+        # Remember last-selected account across launches
+        "last_selected_steam_id": "",
     }
 
     @classmethod
@@ -44,13 +52,30 @@ class SettingsManager:
         interval = max(1, min(60, interval))
         cls._settings["auto_refresh_interval_seconds"] = interval
 
-        for key in ("auto_refresh_enabled", "copy_code_on_click"):
+        conf_interval = cls._settings.get("auto_refresh_confirmations_interval_seconds")
+        if not isinstance(conf_interval, int):
+            conf_interval = cls.DEFAULTS["auto_refresh_confirmations_interval_seconds"]
+        conf_interval = max(15, min(600, conf_interval))
+        cls._settings["auto_refresh_confirmations_interval_seconds"] = conf_interval
+
+        bool_keys = (
+            "auto_refresh_enabled",
+            "copy_code_on_click",
+            "auto_refresh_confirmations_enabled",
+            "auto_confirm_trades",
+            "auto_confirm_market",
+        )
+        for key in bool_keys:
             if not isinstance(cls._settings.get(key), bool):
                 cls._settings[key] = cls.DEFAULTS[key]
 
         theme = cls._settings.get("theme")
         if not isinstance(theme, str):
             cls._settings["theme"] = cls.DEFAULTS["theme"]
+
+        last_id = cls._settings.get("last_selected_steam_id")
+        if not isinstance(last_id, str):
+            cls._settings["last_selected_steam_id"] = cls.DEFAULTS["last_selected_steam_id"]
 
     @classmethod
     def save_settings(cls) -> None:
