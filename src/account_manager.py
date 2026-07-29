@@ -6,13 +6,46 @@ This module provides classes for managing Steam accounts and interfacing with ai
 import json
 import os
 import threading
-import urllib.request
 import xml.etree.ElementTree as ET
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, asdict
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
 from datetime import datetime
 import asyncio
+
+
+# Latest-stable Chrome build the app impersonates when talking to Steam.
+_CHROME_VERSION_FULL = "150.0.7871.187"
+_CHROME_VERSION_MAJOR = "150"
+_CHROME_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    f"(KHTML, like Gecko) Chrome/{_CHROME_VERSION_FULL} Safari/537.36"
+)
+_PRIMP_IMPERSONATE = "chrome_148"
+
+
+def _steam_default_headers() -> Dict[str, str]:
+    """Chrome 150 header set applied to every direct Steam request."""
+    return {
+        "User-Agent": _CHROME_UA,
+        "Accept": (
+            "text/html,application/xhtml+xml,application/xml;q=0.9,"
+            "image/avif,image/webp,image/apng,*/*;q=0.8"
+        ),
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US,en;q=0.9",
+        "sec-ch-ua": (
+            f'"Chromium";v="{_CHROME_VERSION_MAJOR}", '
+            f'"Not;A=Brand";v="8", '
+            f'"Google Chrome";v="{_CHROME_VERSION_MAJOR}"'
+        ),
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "Upgrade-Insecure-Requests": "1",
+    }
 
 
 @dataclass
@@ -259,18 +292,25 @@ class AccountManager(QObject):
     def _fetch_avatar_async(self, account: AccountData):
         """Fetch avatar image in one thread: resolve URL from XML if needed, then download bytes."""
         try:
+            import primp
+
+            client = primp.Client(
+                impersonate=_PRIMP_IMPERSONATE,
+                timeout=10,
+                verify=True,
+            )
+
             if not account.avatar_url:
                 xml_url = f"https://steamcommunity.com/profiles/{account.steam_id}/?xml=1"
-                with urllib.request.urlopen(xml_url, timeout=10) as r:
-                    root = ET.fromstring(r.read())
+                resp = client.get(xml_url)
+                root = ET.fromstring(resp.content)
                 avatar_url = root.findtext('avatarFull') or root.findtext('avatarMedium') or ''
                 if not avatar_url:
                     return
                 account.avatar_url = avatar_url
 
-            with urllib.request.urlopen(account.avatar_url, timeout=10) as r:
-                data = r.read()
-            self.avatar_loaded.emit(account.steam_id, data)
+            resp = client.get(account.avatar_url)
+            self.avatar_loaded.emit(account.steam_id, resp.content)
         except Exception:
             pass
 
@@ -354,8 +394,10 @@ class AuthenticationManager(QObject):
         """Create an aiohttp ClientSession, optionally routing through an HTTP proxy."""
         from aiohttp import ClientSession
 
+        headers = _steam_default_headers()
+
         if not proxy:
-            return ClientSession(raise_for_status=True)
+            return ClientSession(raise_for_status=True, headers=headers, auto_decompress=True)
 
         # Subclass that injects proxy= into every request so aiosteampy
         # (which owns the session internally) uses the proxy transparently.
@@ -366,7 +408,7 @@ class AuthenticationManager(QObject):
                 kwargs.setdefault('proxy', proxy_url)
                 return await super()._request(method, str_or_url, **kwargs)
 
-        return _ProxiedSession(raise_for_status=True)
+        return _ProxiedSession(raise_for_status=True, headers=headers, auto_decompress=True)
 
     async def login_account(self, account: AccountData) -> Dict[str, Any]:
         """Login to Steam account using aiosteampy"""
@@ -592,17 +634,35 @@ class AuthenticationManager(QObject):
                 'persistence': '1',
             }
 
-            from aiohttp import ClientSession
+            import primp
+
             proxy_url = account.proxy or None
-            # Use a dedicated session (no raise_for_status) so we can inspect
-            # Steam's own JSON error responses rather than raising on 4xx.
-            async with ClientSession() as session:
-                kwargs = {'data': form}
-                if proxy_url:
-                    kwargs['proxy'] = proxy_url
-                async with session.post(url, **kwargs) as resp:
-                    text = await resp.text()
-                    status = resp.status
+            # primp handles TLS/JA3/HTTP2 fingerprinting via impersonate and
+            # emits Chrome's Accept-Encoding (gzip, deflate, br) automatically.
+            client_kwargs: Dict[str, Any] = {
+                'impersonate': _PRIMP_IMPERSONATE,
+                'timeout': 15,
+                'verify': True,
+            }
+            if proxy_url:
+                client_kwargs['proxy'] = proxy_url
+            client = primp.AsyncClient(**client_kwargs)
+            try:
+                resp = await client.post(url, data=form)
+                # primp's `.text` is a property on recent versions but was
+                # historically a method on older builds — accept either.
+                raw_text = resp.text
+                text = raw_text() if callable(raw_text) else raw_text
+                status = resp.status_code
+            finally:
+                close = getattr(client, 'close', None)
+                if close is not None:
+                    try:
+                        result = close()
+                        if asyncio.iscoroutine(result):
+                            await result
+                    except Exception:
+                        pass
 
             body: Dict[str, Any] = {}
             if text:

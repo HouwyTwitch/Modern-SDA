@@ -32,12 +32,13 @@ A modern PyQt5-based Steam Desktop Authenticator GUI.
 - [PyQt5](https://pypi.org/project/PyQt5/)
 - [aiosteampy](https://github.com/somespecialone/aiosteampy)
 - [aiohttp](https://pypi.org/project/aiohttp/)
+- [primp](https://pypi.org/project/primp/) — Chrome TLS/HTTP fingerprint impersonation for Steam requests
 - [pyzbar](https://pypi.org/project/pyzbar/) + [Pillow](https://pypi.org/project/Pillow/) — for QR login image decoding
 
 Install dependencies:
 
 ```bash
-pip install PyQt5 aiosteampy aiohttp pyzbar Pillow
+pip install PyQt5 aiosteampy aiohttp primp pyzbar Pillow
 ```
 
 ## Usage
